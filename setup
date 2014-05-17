@@ -1,0 +1,29 @@
+#!/bin/bash
+
+curr_dir=$PWD"/"
+
+function exists ()
+{
+  if [[ -e $curr_dir$1 ]]; 
+    then
+      echo 1
+    else
+      echo 0
+  fi
+}
+
+function make_dir ()
+{
+  dir_exists=$(exists $1)
+  if [[ dir_exists -eq 0 ]];
+    then
+      mkdir $curr_dir$1
+  fi
+}
+
+# Create necessary directories
+make_dir cover_objects
+make_dir detect_statistics
+make_dir extracted_objects
+make_dir presentation
+make_dir stego_objects
