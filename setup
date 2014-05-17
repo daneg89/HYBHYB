@@ -25,5 +25,4 @@ function make_dir ()
 make_dir cover_objects
 make_dir detect_statistics
 make_dir extracted_objects
-make_dir presentation
 make_dir stego_objects

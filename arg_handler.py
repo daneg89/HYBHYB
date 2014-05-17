@@ -10,4 +10,23 @@
 def set_data(flags):
   pass
 
-def parse
+#
+# Takes a set of command-line args and parses them
+#
+# Params:
+#   args - String of command line flags
+#
+def parse_args(args):
+  pass
+
+#
+# Makes sure that the args specified on the command line are valid
+#
+# Params:
+#   args - String of command line flags
+# 
+# Returns:
+#   True/False - args are valid?
+#
+def validate_args(args):
+  pass
