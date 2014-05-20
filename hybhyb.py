@@ -16,8 +16,8 @@ import constants
 # if flag == -h, then show help
 
 
-# TODO: Set up our data to pass on to the appropriate function
-data = { "cover_obj": None, "target_obj": None, "key": "testKey",
+# TODO: Set up our data to pass on to the embed_data function
+data = { "cover_obj": "cover_objects/PinkieCrazy.PNG", "target_obj": "blah", "key": "testKey",
          "method": constants.LSB, "stats_mode": False, "show_image": False,
          "message": "You shall not pass!", "garbage": False }
 
