@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
-#
-# Performs embedding of a cover object using Bit-Plane Complexity Segmentation
-#
-# Params:
-#   file_path - String that indicates path of cover object
-#   data - Collection of bits that will be embedded
-#
-def bpcs_embed(file_path, data):
-  print "bpcs"
+def bpcs_embed(cover_image, data):
+   """ Embeds a cover image using Bit-Plane Complexity Segmentation
+
+   Params:
+      cover_image - Image we want to hide our data in
+      data - Collection of bits that will be embedded
+
+   """
+   print "bpcs"
 

@@ -1,18 +1,17 @@
 #!/usr/bin/python
 
-#
-# 
-#
-#
-def lsb_embed(file_path, data, random=False):
+# TODO: Add header_bit_len
+def lsb_embed(target_data, data, random=False):
    """ Performs a Least Significant Bit embedding of a cover object
 
    Params:
-      file_path - String that indicates path of the cover object
-      data - Collection of bits that will be embedded
+      target_data - Collection of bytes of the cover object
+      data - Collection of bits that will be embedded into the cover object
+      random - Determines if embedding is sequential or pseudo-random
+
+   Returns:
 
    """ 
 
-   print file_path
+   print target_data
    print data
-

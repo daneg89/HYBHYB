@@ -1,18 +1,20 @@
 #!/usr/bin/python
 
+from bit_manip import tuples_to_bits
 from bpcs import bpcs_embed
 from lsb import lsb_embed
-from file_utils import convert_file_to_bits
+from file_utils import file_to_bytes
 import constants
 
 def calc_embed_header(num_pixels, color_depth):
-   """ Calculates the # of bits to use for the cover image's message length
+   """ Calculates the # of bits to use for a cover image's message length
    
    Params:
       num_pixels - Number of pixels in the Image
       color_depth - Number of bits that make up each color (8 or 24)
    
    """
+   # TODO: implement
    pass
 
 def est_embed_capacity(num_bits, method):
@@ -49,8 +51,10 @@ def embed_data(data):
 
 
    # Test stub
-   embed_data = convert_file_to_bits(data["target_obj"])
-   lsb_embed(data["cover_obj"], embed_data)
+   # Add the "1" for now to indicate that it's a plaintext message
+   embed_data = "1" + file_to_bytes(data["target_obj"])
+   target_data = file_to_bytes(data["cover_obj"])
+   embedded_data = lsb_embed(target_data, embed_data)
 
 def generate_message(embed_capacity):
    """
@@ -63,4 +67,5 @@ def generate_message(embed_capacity):
       embed_capacity - Number of bits that the target object can have modified
 
    """
+   # TODO: implement
    pass

@@ -1,32 +1,43 @@
 #!/usr/bin/python
 
-#
-# Takes the flags parsed from the command line and converts them to data
-# that can be assigned to our dictionary
-#
-# Params:
-#   flags - dictionary of flags
-#
-def set_data(flags):
-  pass
-
-#
-# Takes a set of command-line args and parses them
-#
-# Params:
-#   args - String of command line flags
-#
 def parse_args(args):
-  pass
+   """ Takes a set of command-line args and parses them
+ 
+   Params:
+     args - String of command line flags
+ 
+   Returns:
+      Dictionary that carries the following information
+         > "cover_obj": String
+         > "target_obj": String
+         > "key": String
+         > "method": Int
+         > "stats_mode": Bool
+         > "show_image": Bool
+         > "message": String
+         > "garbage": Bool
+ 
+   Throws:
+     Exception when args are invalid
 
-#
-# Makes sure that the args specified on the command line are valid
-#
-# Params:
-#   args - String of command line flags
-# 
-# Returns:
-#   True/False - args are valid?
-#
-def validate_args(args):
-  pass
+   """
+
+   valid_args(args) 
+   # TODO: implement
+   pass
+
+def valid_args(args):
+   """
+ 
+   Makes sure that the args specified on the command line are valid
+ 
+   Params:
+      args - String of command line flags
+  
+   Returns:
+      True/False - args are valid?
+
+   """
+
+   # TODO: implement
+   pass
