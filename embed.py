@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-from bit_manip import tuples_to_bits
+from bit_manip import bits_to_bytes
 from bpcs import bpcs_embed
 from lsb import lsb_embed
-from file_utils import file_to_bytes
+from file_utils import file_to_bits
 import constants
 
 def calc_embed_header(num_pixels, color_depth):
@@ -49,11 +49,15 @@ def embed_data(data):
    """
    # TODO: Get the data to embed
 
+   # TODO: Calculate number of bits we can embed
+
+   # TODO: Check bits > capacity
+
 
    # Test stub
    # Add the "1" for now to indicate that it's a plaintext message
-   embed_data = "1" + file_to_bytes(data["target_obj"])
-   target_data = file_to_bytes(data["cover_obj"])
+   embed_data = "1" + file_to_bits(data["target_obj"])
+   target_data = bits_to_bytes(file_to_bits(data["cover_obj"]))
    embedded_data = lsb_embed(target_data, embed_data)
 
 def generate_message(embed_capacity):

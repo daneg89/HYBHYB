@@ -1,16 +1,18 @@
 #!/usr/bin/python
 
 def bits_to_bytes(bits):
-   """ Converts a string of bits to bytes 
+   """ Converts a string of bits to a list of bytes
    
    Params:
       bits - String of 0s and 1s
 
    Returns:
-      List of bytes
+      List of integers representing bytes
    
    """
-   return bits # Test code, TODO: implement
+   byte_size = 8
+   byte_list = [bits[i:i + byte_size] for i in range(0, len(bits), byte_size)]
+   return [int(i, 2) for i in byte_list]
 
 def hex_to_bits(hex_string):
    """ Takes a hex_string and returns the bit representation of it """
