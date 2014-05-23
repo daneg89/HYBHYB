@@ -6,6 +6,20 @@ from os import path
 import constants
 import subprocess
 
+def get_file_extension(file_path):
+   """ Determines the type of file specified by the file path
+
+   Params:
+      file_path - File path of the target file NOT including $PWD
+
+   Returns:
+      String of file extension. Ex: .jpg, .bmp, .png
+
+   Throws:
+      Exception when file is not found
+   """
+   pass
+
 def get_file_type(file_path):
    """ Determines the type of file specified by the file path
 

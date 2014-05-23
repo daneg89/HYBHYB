@@ -89,9 +89,13 @@ def embed_data(data):
    # TODO: Determine what embedding to do and perform it
    embedded_data = lsb_embed(cover_data, embed_data)
 
-   # Convert data back to format suitable for the cover type
+   # Convert data back to format suitable for the cover type and write the file
    if cover_file_type == constants.IMAGE:
-      pass
+      num_color_bands = image_utils.get_num_color_bands(cover_obj.mode)
+      embedded_pixels = image_utils.bytes_to_pixels(
+                        embedded_data, num_color_bands)
+      cover_obj.putdata(embedded_pixels)
+      cover_obj.save(constants.STEGO + "Steg_" + "001.jpg")
    else:
       pass
 
