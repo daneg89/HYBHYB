@@ -3,7 +3,29 @@
 from bit_manip import bits_to_bytes
 from bit_manip import hex_to_bits
 from os import path
+import constants
 import subprocess
+
+def get_file_type(file_path):
+   """ Determines the type of file specified by the file path
+
+   Params:
+      file_path - File path of the target file NOT including $PWD
+
+   Returns:
+      Integer constant representing the file type (see constants.py)
+
+   Throws:
+      Exception when file is not found
+   """
+
+   if not file_exists(file_path):
+      raise
+   else:
+      # TODO: implement this
+      pass
+   
+   return constants.IMAGE
 
 def file_to_bits(file_path):
    """ Performs a hexdump on a file and returns the bits
@@ -11,7 +33,7 @@ def file_to_bits(file_path):
       file_path - File path of the target file NOT including $PWD
 
    Returns:
-      String - String of bits if successful, None if problems with file
+      String of bits if successful
 
    Throws:
       Exception when file is not found

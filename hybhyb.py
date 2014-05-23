@@ -27,7 +27,7 @@ else:
       pass
 
 # Test data
-   data = { "cover_obj": "lsb_test", "target_obj": "lsb_data", "key": "testKey",
+   data = { "cover_obj": "cover_objects/test.jpg", "target_obj": "lsb_data", "key": "testKey",
       "method": constants.LSB, "stats_mode": False, "show_image": False,
       "message": "You shall not pass!", "garbage": False }
 
