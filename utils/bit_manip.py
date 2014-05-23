@@ -23,21 +23,3 @@ def hex_to_bits(hex_string):
    num_lead_zeroes = bit_string_length - len(bit_string)
 
    return (("0" * num_lead_zeroes) + bit_string)
-
-def tuples_to_bits(tuples):
-   """ Converts a list of tuples to bits
-   
-   Params:
-      tuples - List of tuples
-   
-   """
-   bit_string = ""
-
-   # TODO: make sure 0 bits added in front
-
-   # TODO: fix this, probably implement a different way
-   for tup in tuples:
-      for x in tup:
-         bit_string += bin(tup[x])[2:] # 0b will be sliced off
-
-   return bit_string

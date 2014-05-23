@@ -1,17 +1,19 @@
 #!/usr/bin/python
 
+import sys
+
 from bit_manip import bits_to_bytes
 from bpcs import bpcs_embed
 from lsb import lsb_embed
 from file_utils import get_file_type
 from file_utils import file_to_bits
-from image_utils import get_color_depth
 from PIL import Image
 import constants
+import image_utils
 import math
 
-def calc_embed_header_len(num_embeddable_bits):
-   """ Calculates the # of bits to use for a cover image's message length
+def calc_msg_header_len(num_embeddable_bits):
+   """ Calculates the # of bits to use for a cover object's message length
    
    Params:
       num_embeddable_bits - Number of bits that we can actually use for embedding
@@ -41,48 +43,6 @@ def create_header(header_len, message_len):
 
    return header
 
-def decode_data(data):
-   """ Generic decoding function that determines how to decode a file
-
-   Params:
-      data - Dictionary that carries the following information
-         > "cover_obj": String
-         > "target_obj": String
-         > "key": String
-         > "method": Int
-         > "stats_mode": Bool
-         > "show_image": Bool
-         > "message": String
-         > "garbage": Bool
-   """
-   # TODO: Get the file to decode
-
-
-   # TODO: Calculate header length
-   header_len = calc_embed_header_len(200000) # Stub value
-
-
-   # TODO: Perform the actual decoding
-
-   pass
-   
-
-def est_embed_capacity(num_bits, method):
-   """ Estimates the embedding capacity of the specified object
-
-   Params:
-      num_bytes - The number of bits to embed
-      method - The method used to embed the bytes
-
-   """
-   if method == constants.LSB or method == constants.LSB_PR:
-      return num_bits / 8 # ~12.5%
-   elif method == constants.BPCS:
-      return num_bits / 4 # 25%
-   else:
-      return 0
-
-
 def embed_data(data):
    """ Generic embedding function that determines how to embed a file
 
@@ -103,24 +63,22 @@ def embed_data(data):
       pass
 
    if cover_file_type == constants.IMAGE:
-      cover_obj = Image.open(data["cover_obj"])
-      color_depth = get_color_depth(cover_obj.mode)
+      cover_obj = Image.open(data["cover_obj"]).copy() # Don't modify orig img
+      color_depth = image_utils.get_color_depth(cover_obj.mode)
       num_pixels = (cover_obj.size[0] * cover_obj.size[1]) # Width * Height
       pixel_data = list(cover_obj.getdata())
+      cover_data = image_utils.pixels_to_bytes(pixel_data)
       num_embeddable_bits = (num_pixels * color_depth)
    else:
       print "Unsupported file type!"
 
    # Create the header
-   header_len = calc_embed_header_len(num_embeddable_bits) # Stub values
+   header_len = calc_msg_header_len(num_embeddable_bits)
    header_bits = create_header(header_len, len(data))
 
-   # Test stub
    # Add the "1" for now to indicate that it's a plaintext message
-   plaintext_bit = "1"
+   plaintext_bit = "1" # Stub code
    embed_data = plaintext_bit + header_bits + file_to_bits(data["target_obj"])
-   target_data = bits_to_bytes(file_to_bits(data["cover_obj"]))
-
 
    # Calculate number of bits we can embed
    embed_capacity = est_embed_capacity(len(embed_data), data["method"])
@@ -128,8 +86,31 @@ def embed_data(data):
    # TODO: Check bits > capacity
 
 
-   # Determine what embedding to do and perform it
-   embedded_data = lsb_embed(target_data, embed_data)
+   # TODO: Determine what embedding to do and perform it
+   embedded_data = lsb_embed(cover_data, embed_data)
+
+   # Convert data back to format suitable for the cover type
+   if cover_file_type == constants.IMAGE:
+      pass
+   else:
+      pass
+
+   # TODO: Write the stego object
+
+def est_embed_capacity(num_bits, method):
+   """ Estimates the embedding capacity of the specified object
+
+   Params:
+      num_bytes - The number of bits to embed
+      method - The method used to embed the bytes
+
+   """
+   if method == constants.LSB or method == constants.LSB_PR:
+      return num_bits / 8 # ~12.5%
+   elif method == constants.BPCS:
+      return num_bits / 4 # 25%
+   else:
+      return 0
 
 def generate_message(embed_capacity):
    """

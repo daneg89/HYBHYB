@@ -1,10 +1,8 @@
 #!/usr/bin/python
 
-from arg_handler import parse_args
-from embed import embed_data
-import arg_handler
-import constants
-import sys
+def init():
+   """ Initialize some things to make things run smoothly """
+   sys.path.append("utils")
 
 # TODO: Implement
 def show_help():
@@ -15,6 +13,13 @@ def show_help():
 # Main execution of program happens here
 #
 
+import sys
+init()
+
+from arg_handler import parse_args
+from embed import embed_data
+import arg_handler
+import constants
 
 # Just looking for help?
 if len(sys.argv) == 1 or sys.argv[1] == "-h":
