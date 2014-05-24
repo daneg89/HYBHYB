@@ -10,6 +10,9 @@ HIST_ATTACK = 0
 VISUAL_ATTACK = 1
 FVISUAL_ATTACK = 2
 
+# File extensions
+EXTENSIONS = [".jpg", ".jpeg", ".bmp", ".gif", "png"]
+
 # File paths
 COVER = "cover_objects/"
 DETECT = "detect_statistics/"

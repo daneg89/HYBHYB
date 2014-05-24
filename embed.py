@@ -63,49 +63,73 @@ def embed_data(data):
       pass
 
    if cover_file_type == constants.IMAGE:
-      cover_obj = Image.open(data["cover_obj"]).copy() # Don't modify orig img
-      color_depth = image_utils.get_color_depth(cover_obj.mode)
-      num_pixels = (cover_obj.size[0] * cover_obj.size[1]) # Width * Height
-      pixel_data = list(cover_obj.getdata())
-      cover_data = image_utils.pixels_to_bytes(pixel_data)
-      num_embeddable_bits = (num_pixels * color_depth)
+      embed_image(data["cover_obj"], data["target_obj"], data["key"], 
+                  data["method"], data["show_image"], data["message"])
    else:
       print "Unsupported file type!"
 
+
+def embed_image(cover_obj_path, target_obj_path, key, method, show_image, message):
+   """ Function that handles image embedding
+
+   Params:
+      cover_obj_path - Path of the cover object   
+      target_obj_path - Path of the target object   
+      key - Key used to perform embedding (LSB only)
+      method - Integer representing the embedding method
+      show_image - Show the image after it's embedded?
+      message - The plaintext message that will be embedded (if no target obj)
+
+   """
+
+   cover_obj = Image.open(cover_obj_path).copy() # Don't modify orig img
+   color_depth = image_utils.get_color_depth(cover_obj.mode)
+   num_color_bands = image_utils.get_num_color_bands(cover_obj.mode)
+   num_pixels = (cover_obj.size[0] * cover_obj.size[1]) # Width * Height
+   pixel_data = list(cover_obj.getdata())
+   cover_data = image_utils.pixels_to_bytes(pixel_data)
+   num_embeddable_bits = (num_pixels * color_depth)
+
    # Create the header
    header_len = calc_msg_header_len(num_embeddable_bits)
-   header_bits = create_header(header_len, len(data))
 
-   # Add the "1" for now to indicate that it's a plaintext message
-   plaintext_bit = "1" # Stub code
-   embed_data = plaintext_bit + header_bits + file_to_bits(data["target_obj"])
+   if message != None:
+      message_bits = "0" # TODO: convert message to bits
+      plaintext_bit = "1"
+   else:
+      message_bits = file_to_bits(target_obj_path)
+      plaintext_bit = "0"
+
+   header_bits = create_header(header_len, len(message_bits))
+   embed_data = plaintext_bit + header_bits + message_bits
 
    # Calculate number of bits we can embed
-   embed_capacity = est_embed_capacity(len(embed_data), data["method"])
+   embed_capacity = est_embed_capacity(num_embeddable_bits, method)
 
-   # TODO: Check bits > capacity
-
-
-   # TODO: Determine what embedding to do and perform it
-   embedded_data = lsb_embed(cover_data, embed_data)
-
-   # Convert data back to format suitable for the cover type and write the file
-   if cover_file_type == constants.IMAGE:
-      num_color_bands = image_utils.get_num_color_bands(cover_obj.mode)
-      embedded_pixels = image_utils.bytes_to_pixels(
-                        embedded_data, num_color_bands)
-      cover_obj.putdata(embedded_pixels)
-      cover_obj.save(constants.STEGO + "Steg_" + "001.jpg")
+   # Check bits > capacity
+   if len(embed_data) > embed_capacity:
+      print "Message exceeds length of target file!"
    else:
-      pass
+      if method == constants.BPCS:
+         # TODO: pass img name to bpcs
+         bpcs_embed(cover_obj, embed_data)
+      else:
+         embedded_data = lsb_embed(cover_data, embed_data)
 
-   # TODO: Write the stego object
+         # Convert data back to format suitable for the cover type and write the file
+         embedded_pixels = image_utils.bytes_to_pixels(
+                           embedded_data, num_color_bands)
+         cover_obj.putdata(embedded_pixels)
+
+         # TODO: Sort palette if applicable
+
+         cover_obj.save(constants.STEGO + "Steg_" + "001.jpg")
 
 def est_embed_capacity(num_bits, method):
    """ Estimates the embedding capacity of the specified object
 
    Params:
-      num_bytes - The number of bits to embed
+      num_bytes - The number of bits available for embedding
       method - The method used to embed the bytes
 
    """
