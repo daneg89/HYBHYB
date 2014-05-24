@@ -88,8 +88,6 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
    color_depth = image_utils.get_color_depth(cover_obj.mode)
    num_color_bands = image_utils.get_num_color_bands(cover_obj.mode)
    num_pixels = (cover_obj.size[0] * cover_obj.size[1]) # Width * Height
-   pixel_data = list(cover_obj.getdata())
-   cover_data = image_utils.pixels_to_bytes(pixel_data)
    num_embeddable_bits = (num_pixels * color_depth)
 
    # Create the header
@@ -116,6 +114,13 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
          # TODO: pass img name to bpcs
          bpcs_embed(cover_obj, embed_data)
       else:
+         # TODO: Get palette sorting to work with color gifs
+         # Sort palette 
+         if cover_obj.palette != None:
+            image_utils.sort_palette(cover_obj)
+
+         pixel_data = list(cover_obj.getdata())
+         cover_data = image_utils.pixels_to_bytes(pixel_data)
          embedded_data = lsb_embed(cover_data, embed_data)
 
          # Convert data back to format suitable for the cover type and write the file
@@ -125,10 +130,6 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
 
          cover_obj.putdata(embedded_pixels)
 
-         # TODO: Sort palette CORRECTLY 
-         if cover_obj.palette != None:
-            sorted_palette = image_utils.sort_palette(cover_obj.getpalette())
-            cover_obj.putpalette(sorted_palette)
 
          cover_obj.save(constants.STEGO + "Steg_" + "001.gif")
 

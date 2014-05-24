@@ -78,17 +78,32 @@ def pixels_to_bytes(pixel_list):
 
    return byte_list
 
-def sort_palette(palette):
-   """ Parses and sorts a palette
+def sort_palette(palette_image):
+   """ Parses and sorts the palette of an image
    
    Params:
-      palette - Object returned from Image.getpalette()
-
-   Returns:
-      A list of 768 integers for a new sorted palette
+      palette_image - Image that has a palette
 
    """
-   new_palette = [palette[i:i + 3] for i in range(0, len(palette), 3)]
+   old_palette = palette_image.getpalette()
+   # Create a new palette that we can sort
+   new_palette = [old_palette[i:i + 3] for i in range(0, len(old_palette), 3)]
    new_palette.sort()
+   old_palette = [old_palette[i:i + 3] for i in range(0, len(old_palette), 3)]
+
+   # Create the pixel map
+   pixel_map = {k:v for k in range(0, len(old_palette)) for v in new_palette}
+   for i in range(len(old_palette)):
+      pixel_map[i] = old_palette[i]
+
+   # Map pixels to new palette
+   pixel_list = pixels_to_bytes(list(palette_image.getdata()))
+
+   for i in range(len(pixel_list)):
+      pixel_list[i] = new_palette.index(pixel_map[pixel_list[i]])
+
+   palette_image.putdata(pixel_list)
+
+   # Create one contiguous palette
    new_palette = [palette_val for sublist in new_palette for palette_val in sublist]
-   return new_palette
+   palette_image.putpalette(new_palette)
