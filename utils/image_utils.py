@@ -11,9 +11,13 @@ def bytes_to_pixels(byte_list, num_color_bands):
       List of tuples representing pixels
 
    """
+   if num_color_bands > 1:
+      pixel_list = [tuple(byte_list[i:i + num_color_bands]) for i in range(
+                    0, len(byte_list), num_color_bands)]
+   else:
+      pixel_list = byte_list # Don't format as tuples, just return list
 
-   return [tuple(byte_list[i:i + num_color_bands]) for i in range(
-          0, len(byte_list), num_color_bands)]
+   return pixel_list
 
 def get_color_depth(mode):
    """ Gets the color depth based on the Image mode 
@@ -54,13 +58,37 @@ def get_num_color_bands(mode):
       return 1
 
 def pixels_to_bytes(pixel_list):
-   """ Converts a list of pixels (set of tuples) to a list of bytes
+   """ Converts a list of pixels to a list of bytes
 
    Params:
-      pixel_list - list of pixel tuples to convert
+      pixel_list - list of pixels to convert
 
    Returns:
       List of integers representing bytes
 
+   Note:
+      Depending on the image type, the list may either be a list of tuples or
+      a list of integers. 
+
    """
-   return [byte for tup in pixel_list for byte in tup]
+   if type(pixel_list[0]) == type(tuple()):
+      byte_list = [byte for tup in pixel_list for byte in tup]
+   else:
+      byte_list = pixel_list
+
+   return byte_list
+
+def sort_palette(palette):
+   """ Parses and sorts a palette
+   
+   Params:
+      palette - Object returned from Image.getpalette()
+
+   Returns:
+      A list of 768 integers for a new sorted palette
+
+   """
+   new_palette = [palette[i:i + 3] for i in range(0, len(palette), 3)]
+   new_palette.sort()
+   new_palette = [palette_val for sublist in new_palette for palette_val in sublist]
+   return new_palette

@@ -62,6 +62,8 @@ def embed_data(data):
    except: # TODO: Catch the exception
       pass
 
+   # TODO: Generate message if garbage
+
    if cover_file_type == constants.IMAGE:
       embed_image(data["cover_obj"], data["target_obj"], data["key"], 
                   data["method"], data["show_image"], data["message"])
@@ -119,11 +121,16 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
          # Convert data back to format suitable for the cover type and write the file
          embedded_pixels = image_utils.bytes_to_pixels(
                            embedded_data, num_color_bands)
+
+
          cover_obj.putdata(embedded_pixels)
 
-         # TODO: Sort palette if applicable
+         # TODO: Sort palette CORRECTLY 
+         if cover_obj.palette != None:
+            sorted_palette = image_utils.sort_palette(cover_obj.getpalette())
+            cover_obj.putpalette(sorted_palette)
 
-         cover_obj.save(constants.STEGO + "Steg_" + "001.jpg")
+         cover_obj.save(constants.STEGO + "Steg_" + "001.gif")
 
 def est_embed_capacity(num_bits, method):
    """ Estimates the embedding capacity of the specified object
