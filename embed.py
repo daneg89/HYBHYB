@@ -5,43 +5,13 @@ import sys
 from bit_manip import bits_to_bytes
 from bpcs import bpcs_embed
 from lsb import lsb_embed
+from file_utils import calc_msg_header_len
+from file_utils import create_header
 from file_utils import get_file_type
 from file_utils import file_to_bits
 from PIL import Image
 import constants
 import image_utils
-import math
-
-def calc_msg_header_len(num_embeddable_bits):
-   """ Calculates the # of bits to use for a cover object's message length
-   
-   Params:
-      num_embeddable_bits - Number of bits that we can actually use for embedding
-   
-   """
-   return int(math.ceil(math.log(num_embeddable_bits, 2)))
-
-def create_header(header_len, message_len):
-   """ Creates the header that indicates how long a message is
-
-   Params:
-      header_len - Length that the header should be
-      message_len - Length of the message that will be embedded
-
-   Returns:
-      String header with leading zeroes included
-
-  """
-
-   message_bits = bin(message_len)[2:]
-   leading_zeroes = header_len - len(message_bits)
-
-   if leading_zeroes > 0:
-      header = (leading_zeroes * "0") + message_bits 
-   else:
-      header = message_bits
-
-   return header
 
 def embed_data(data):
    """ Generic embedding function that determines how to embed a file
@@ -101,7 +71,7 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
       plaintext_bit = "0"
 
    header_bits = create_header(header_len, len(message_bits))
-   embed_data = plaintext_bit + header_bits + message_bits
+   embed_data = header_bits + plaintext_bit + message_bits
 
    # Calculate number of bits we can embed
    embed_capacity = est_embed_capacity(num_embeddable_bits, method)
@@ -119,9 +89,10 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
          if cover_obj.palette != None:
             image_utils.sort_palette(cover_obj)
 
+         # Perform embedding
          pixel_data = list(cover_obj.getdata())
          cover_data = image_utils.pixels_to_bytes(pixel_data)
-         embedded_data = lsb_embed(cover_data, embed_data)
+         embedded_data = lsb_embed(cover_data, embed_data, header_len, key)
 
          # Convert data back to format suitable for the cover type and write the file
          embedded_pixels = image_utils.bytes_to_pixels(
@@ -131,7 +102,7 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
          cover_obj.putdata(embedded_pixels)
 
 
-         cover_obj.save(constants.STEGO + "Steg_" + "001.gif")
+         cover_obj.save(constants.STEGO + "Steg_" + "001.png")
 
 def est_embed_capacity(num_bits, method):
    """ Estimates the embedding capacity of the specified object

@@ -4,7 +4,39 @@ from bit_manip import bits_to_bytes
 from bit_manip import hex_to_bits
 from os import path
 import constants
+import math
 import subprocess
+
+def calc_msg_header_len(num_embeddable_bits):
+   """ Calculates the # of bits to use for a cover object's message length
+   
+   Params:
+      num_embeddable_bits - Number of bits that we can actually use for embedding
+   
+   """
+   return int(math.ceil(math.log(num_embeddable_bits, 2)))
+
+def create_header(header_len, message_len):
+   """ Creates the header that indicates how long a message is
+
+   Params:
+      header_len - Length that the header should be
+      message_len - Length of the message that will be embedded
+
+   Returns:
+      String header with leading zeroes included
+
+  """
+
+   message_bits = bin(message_len)[2:]
+   leading_zeroes = header_len - len(message_bits)
+
+   if leading_zeroes > 0:
+      header = (leading_zeroes * "0") + message_bits 
+   else:
+      header = message_bits
+
+   return header
 
 def get_file_extension(file_path):
    """ Determines the type of file specified by the file path
@@ -54,7 +86,7 @@ def file_to_bits(file_path):
    """
 
    if not file_exists(file_path):
-      raise # TODO: Something
+      raise Exception # TODO: Something
    else: 
       command = ["xxd", "-p", file_path]
       result = subprocess.Popen(command, stdout = subprocess.PIPE)
