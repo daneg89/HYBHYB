@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-import sys
-
 from bit_manip import bits_to_bytes
 from bpcs import bpcs_embed
 from lsb import lsb_embed
@@ -12,6 +10,7 @@ from file_utils import file_to_bits
 from PIL import Image
 import constants
 import image_utils
+import sys
 
 def embed_data(data):
    """ Generic embedding function that determines how to embed a file
@@ -33,6 +32,7 @@ def embed_data(data):
       pass
 
    # TODO: Generate message if garbage
+
 
    if cover_file_type == constants.IMAGE:
       embed_image(data["cover_obj"], data["target_obj"], data["key"], 

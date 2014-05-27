@@ -64,7 +64,12 @@ def decode_image(target_obj_path, key, method):
       decode_results = lsb_decode(target_data, header_len, key)
       plaintext_bit = decode_results[0:1]
 
-   write_result(decode_results, plaintext_bit)
+      if plaintext_bit == "0":
+         is_plaintext = False
+      else:
+         is_plaintext = True
+
+   write_result(decode_results[1:], False)
 
 
 def write_result(data, is_plaintext):
