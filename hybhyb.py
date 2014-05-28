@@ -17,6 +17,7 @@ import sys
 init()
 
 from arg_handler import parse_args
+from decode import decode_data
 from embed import embed_data
 import arg_handler
 import constants
@@ -26,14 +27,9 @@ if len(sys.argv) == 1 or sys.argv[1] == "-h":
    show_help() 
 else:
    # Parse input from command line
-   try:
-      data = parse_args(sys.argv)
-   except: # TODO: catch exception
-      pass
+   data = parse_args(sys.argv[1:]) # First arg isn't needed
 
-# Test data
-   data = { "cover_obj": "cover_objects/test.jpg", "target_obj": "lsb_data", "key": "testKey",
-      "method": constants.LSB, "stats_mode": False, "show_image": False,
-      "message": "You shall not pass!", "garbage": False }
-
-   embed_data(data)
+   if data["action"] == constants.ACTION_EMBED:
+      embed_data(data)
+   elif data["action"] == constants.ACTION_EXTRACT:
+      decode_data(data)

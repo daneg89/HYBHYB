@@ -2,6 +2,49 @@
 
 from constants import *
 
+def get_action(action_flag):
+   """
+   Params:
+      action_flag - String of a valid action flag
+
+   Returns:
+      Integer constant representing the method to use
+   """
+
+   if "-e" == action_flag:
+      action = ACTION_EMBED
+   elif "-x" == action_flag:
+      action = ACTION_EXTRACT
+   elif "-d" == action_flag:
+      action = ACTION_DETECT
+   elif "-v" == action_flag:
+      action = ACTION_VIS_ATK
+   elif "-f" == action_flag:
+      action = ACTION_FILTERED_VIS_ATK
+   else:
+      print "Args validator messed up!"
+
+   return action
+
+def get_method(method_flag):
+   """ Gets the method to use
+
+   Params:
+      method_flag - String of a valid method flag
+
+   Returns:
+      Integer constant representing the method to use
+   """
+
+   if "-l" == method_flag:
+      method = LSB
+   elif "-b" == method_flag:
+      method = BPCS
+   else:
+      print "Args validator messed up!"
+
+   return method
+
 def parse_args(args):
    """ Takes a set of command-line args and parses them
  
@@ -31,38 +74,44 @@ def parse_args(args):
      Exception when args are invalid
 
    """
-   print args
-
    if valid_args(args) == False:
       raise Exception # TODO: make more specific
 
-   # Get the method
-   if "-l" in args:
-      method = LSB
-      for i in range(0, len(args)):
-         # Key?
-         if "-k" in args[i]:
-            key = args[i][2:]
-   elif "-b" in args:
-      method = BPCS
-   else:
-      print "Args validator messed up!"
+   action = -1
+   actions = ["-e", "-x", "-d", "-v", "-f"]
+   key = ""
+   garbage = False
+   message = ""
+   method = -1
+   methods = ["-l", "-b"]
+   stats_mode = False
+   target_obj = None
+   cover_obj = None
+   show_image = False
 
-   # Get the action
-   if flag == "-e":
-      action = ACTION_EMBED
-   elif "-x" in args:
-      action = ACTION_EXTRACT
-   elif "-d" in args:
-      action = ACTION_DETECT
-   elif "-v" in args:
-      action = ACTION_VIS_ATK
-   elif "-f" in args:
-      actoin = ACTION_FILTERED_VIS_ATK
+   for flag in args:
+      if flag in methods:
+         method = get_method(flag)
+      elif flag in actions:
+         action = get_action(flag)
+      elif flag == "-g":
+         garbage = True
+      elif flag[0:2] == "-k":
+         key = flag[2:] 
+      elif flag[0:2] == "-m":
+         message = flag[2:]
+      elif flag == "-s":
+         stats_mode = True
+      elif flag == "--show-image":
+         show_image = True 
+      # Assume at this point that the flag is actually a file
+      else:
+         if target_obj == None:
+            target_obj = flag
+         else:
+            cover_obj = flag
 
-   print "LSB"
-   print key
-
+   return { "action": action, "cover_obj": cover_obj, "target_obj": target_obj, "key": key, "method": method, "stats_mode": stats_mode, "show_image": show_image, "message": message, "garbage": garbage }
 
 def valid_args(args):
    """

@@ -63,7 +63,7 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
    # Create the header
    header_len = calc_msg_header_len(num_embeddable_bits)
 
-   if message != None:
+   if message != "":
       message_bits = "0" # TODO: convert message to bits
       plaintext_bit = "1"
    else:
