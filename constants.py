@@ -17,7 +17,7 @@ VISUAL_ATTACK = 1
 FVISUAL_ATTACK = 2
 
 # File extensions
-EXTENSIONS = [".jpg", ".jpeg", ".bmp", ".gif", "png"]
+EXTENSIONS = ["jpg", "jpeg", "bmp", "gif", "png"]
 
 # File paths
 PATH_COVER = "cover_objects/"

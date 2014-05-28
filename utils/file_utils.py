@@ -38,19 +38,50 @@ def create_header(header_len, message_len):
 
    return header
 
-def get_file_extension(file_path):
-   """ Determines the type of file specified by the file path
+def get_file_extension(file_name):
+   """ Determines the type of file specified by the file name
 
    Params:
-      file_path - File path of the target file NOT including $PWD
+      file_name - File name with the extension
 
    Returns:
       String of file extension. Ex: .jpg, .bmp, .png
 
    Throws:
-      Exception when file is not found
+      Exception when bad extension is given
    """
-   pass
+
+   # Get last 5 chars in case of jpeg
+   extension = file_name[-5:]
+   if extension[0] == ".": # .jpeg
+      if extension[1:] in constants.EXTENSIONS: 
+         pass
+      else: # Invalid extension
+         raise Exception # TODO: custom exception?
+   else: # .bmp, .png, .gif, .jpg
+      extension = file_name[-4:]
+      if extension[1:] in constants.EXTENSIONS:
+         pass
+      else: # Invalid extension
+         raise Exception # TODO: custom exception?
+
+   return extension
+
+def get_file_name_from_path(file_path):
+   """ Parses and returns a file name
+
+   Params:
+      file_path - String that has a path and a file name
+      
+   Returns:
+      Name of the file with extension
+
+   """
+   # Keep removing the path until its gone
+   while file_path.find("/") != -1:
+      file_path = file_path[file_path.find("/") + 1:]
+
+   return file_path
 
 def get_file_type(file_path):
    """ Determines the type of file specified by the file path

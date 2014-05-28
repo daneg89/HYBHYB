@@ -5,6 +5,7 @@ from bpcs import bpcs_embed
 from lsb import lsb_embed
 from file_utils import calc_msg_header_len
 from file_utils import create_header
+from file_utils import get_file_name_from_path
 from file_utils import get_file_type
 from file_utils import file_to_bits
 from PIL import Image
@@ -101,8 +102,8 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
 
          cover_obj.putdata(embedded_pixels)
 
-
-         cover_obj.save(constants.PATH_STEGO + "Steg_" + "001.png")
+         steg_file_name = get_file_name_from_path(cover_obj_path)
+         cover_obj.save(constants.PATH_STEGO + "Steg_" + steg_file_name)
 
 def est_embed_capacity(num_bits, method):
    """ Estimates the embedding capacity of the specified object
