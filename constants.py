@@ -1,9 +1,15 @@
 #!/usr/bin/python
 
+# Action IDs
+ACTION_EMBED = 0
+ACTION_EXTRACT = 1
+ACTION_DETECT = 2
+ACTION_VIS_ATK = 3
+ACTION_FILTERED_VIS_ATK = 4
+
 # Embedding IDs
 LSB = 0
-LSB_PR = 1
-BPCS = 2
+BPCS = 1
 
 # Detection IDs
 HIST_ATTACK = 0
@@ -14,10 +20,10 @@ FVISUAL_ATTACK = 2
 EXTENSIONS = [".jpg", ".jpeg", ".bmp", ".gif", "png"]
 
 # File paths
-COVER = "cover_objects/"
-DETECT = "detect_statistics/"
-EXTRACT = "extracted_objects/"
-STEGO = "stego_objects/"
+PATH_COVER = "cover_objects/"
+PATH_DETECT = "detect_statistics/"
+PATH_EXTRACT = "extracted_objects/"
+PATH_STEGO = "stego_objects/"
 
 # File types
 AUDIO = 0

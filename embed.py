@@ -102,7 +102,7 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
          cover_obj.putdata(embedded_pixels)
 
 
-         cover_obj.save(constants.STEGO + "Steg_" + "001.png")
+         cover_obj.save(constants.PATH_STEGO + "Steg_" + "001.png")
 
 def est_embed_capacity(num_bits, method):
    """ Estimates the embedding capacity of the specified object

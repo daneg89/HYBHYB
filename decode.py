@@ -91,6 +91,6 @@ def write_result(data, is_plaintext):
       # TODO: Generate filename
 
       # Write file
-      new_file = open(constants.EXTRACT + "Extract_001", "wb")
+      new_file = open(constants.PATH_EXTRACT + "Extract_001", "wb")
       new_file.write(write_data)
       new_file.close()
