@@ -23,3 +23,20 @@ def hex_to_bits(hex_string):
    num_lead_zeroes = bit_string_length - len(bit_string)
 
    return (("0" * num_lead_zeroes) + bit_string)
+
+def ascii_to_bits(ascii_str):
+   """ Converts an ASCII String to bits
+
+   Params:
+      ascii_str - The ASCII String we want to convert
+
+   Returns:
+      String of bits (0s and 1s)
+
+   """
+   bit_string = ""
+
+   for char in ascii_str:
+      bit_string += bin(ord(char))[2:]
+
+   return bit_string
