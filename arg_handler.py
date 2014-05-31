@@ -111,6 +111,10 @@ def parse_args(args):
          else:
             cover_obj = flag
 
+   if message != "":
+      cover_obj = target_obj
+      target_obj = None
+
    return { "action": action, "cover_obj": cover_obj, "target_obj": target_obj, "key": key, "method": method, "stats_mode": stats_mode, "show_image": show_image, "message": message, "garbage": garbage }
 
 def valid_args(args):

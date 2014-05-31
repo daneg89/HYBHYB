@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from bit_manip import bits_to_bytes
+from bit_manip import ascii_to_bits
 from bpcs import bpcs_embed
 from lsb import lsb_embed
 from file_utils import calc_msg_header_len
@@ -34,7 +34,6 @@ def embed_data(data):
 
    # TODO: Generate message if garbage
 
-
    if cover_file_type == constants.IMAGE:
       embed_image(data["cover_obj"], data["target_obj"], data["key"], 
                   data["method"], data["show_image"], data["message"])
@@ -64,10 +63,10 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
    # Create the header
    header_len = calc_msg_header_len(num_embeddable_bits)
 
-   if message != "":
-      message_bits = "0" # TODO: convert message to bits
+   if message != "": # Plaintext message
+      message_bits = ascii_to_bits(message)
       plaintext_bit = "1"
-   else:
+   else: # File
       message_bits = file_to_bits(target_obj_path)
       plaintext_bit = "0"
 
@@ -113,7 +112,7 @@ def est_embed_capacity(num_bits, method):
       method - The method used to embed the bytes
 
    """
-   if method == constants.LSB or method == constants.LSB_PR:
+   if method == constants.LSB:
       return num_bits / 8 # ~12.5%
    elif method == constants.BPCS:
       return num_bits / 4 # 25%

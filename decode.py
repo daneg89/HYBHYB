@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from bit_manip import bits_to_ascii
 from bit_manip import bits_to_bytes
 from file_utils import calc_msg_header_len
 from file_utils import create_header
@@ -69,7 +70,7 @@ def decode_image(target_obj_path, key, method):
       else:
          is_plaintext = True
 
-   write_result(decode_results[1:], False)
+   write_result(decode_results[1:], is_plaintext)
 
 
 def write_result(data, is_plaintext):
@@ -82,8 +83,8 @@ def write_result(data, is_plaintext):
    """
 
    if is_plaintext == True:
-      # TODO: Convert data to ASCII
-      print "something"
+      message = bits_to_ascii(data) # Convert data to ASCII
+      print message
    else:
       # Convert data to bytearray
       write_data = bytearray(bits_to_bytes(data))

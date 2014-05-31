@@ -1,5 +1,28 @@
 #!/usr/bin/python
 
+def bits_to_ascii(bits):
+   """ Converts a string of bits to ASCII text
+
+   Params:
+      bits - String of 0s and 1s representing an ASCII string
+
+   Returns:
+      String of ASCII characters
+
+   """
+
+   ascii_text = ""
+   ch_size = 7 # Bit size of an ASCII CHunk
+
+   # Organize bits into groups of 7
+   ascii_chunks = [bits[i:i + ch_size] for i in range(0, len(bits), ch_size)]
+
+   # Convert groups into characters and combine them
+   for i in range(0, len(ascii_chunks)):
+      ascii_text += chr(int(ascii_chunks[i], base=2))
+
+   return ascii_text
+
 def bits_to_bytes(bits):
    """ Converts a string of bits to a list of bytes
    
