@@ -81,7 +81,6 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
       print "Message exceeds length of target file!"
    else:
       if method == constants.BPCS:
-         # TODO: pass img name to bpcs
          bpcs_embed(cover_obj, embed_data)
       else:
          # TODO: Get palette sorting to work with color gifs
@@ -90,9 +89,8 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
             image_utils.sort_palette(cover_obj)
 
          # Perform embedding
-         pixel_data = list(cover_obj.getdata())
-         cover_data = image_utils.pixels_to_bytes(pixel_data)
-         embedded_data = lsb_embed(cover_data, embed_data, header_len, key)
+         cover_data = image_utils.image_to_bytes(cover_obj)
+         embedded_data = lsb_embed(cover_data, embed_data, key)
 
          # Convert data back to format suitable for the cover type and write the file
          embedded_pixels = image_utils.bytes_to_pixels(

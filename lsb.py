@@ -41,13 +41,12 @@ def lsb_decode(target_data, header_len, key=""):
    return decoded_data
 
 
-def lsb_embed(cover_data, target_data, header_len, key=""):
+def lsb_embed(cover_data, target_data, key=""):
    """ Performs a Least Significant Bit embedding of a cover object
 
    Params:
       cover_data - List of bytes of the cover object
       target_data - String of bits that will be embedded into the cover object
-      header_len - # of bits used to indicate hidden message length
       key - Password that determines the seed for the random num generator
 
    Returns:

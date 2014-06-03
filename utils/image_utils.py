@@ -19,21 +19,6 @@ def bytes_to_pixels(byte_list, num_color_bands):
 
    return pixel_list
 
-def cgc_to_pbc(byte_list):
-   """ Converts a set of bytes from Canonical Gray Coding to Pure-Binary Coding 
-
-   Params:
-      byte_list - List of integers representing bytes
-
-   See http://www.datahide.com/BPCSe/pbc-vs-cgc-e.html for more information
-   on converting between CGC and PBC
-
-   """
-   gray_bytes = gen_cgc_table()
-
-   for i in range(0, len(byte_list)):
-      byte_list[i] = gray_bytes.index(byte_list[i])
-
 def get_color_depth(mode):
    """ Gets the color depth based on the Image mode 
    
@@ -72,56 +57,18 @@ def get_num_color_bands(mode):
       print "Unsupported image mode given!"
       return 1
 
-def gen_cgc_table(as_bytes=True):
-   """ Generates a CGC table
-   Params:
-      as_bytes - Return the table as a list of bytes (Integers) or 
-                 bits (Strings)
+def image_to_bytes(image):
+   """ Converts an Image to its byte representation
    
-   Returns:
-      List of Integers or Strings formatted according to CGC
-
-   """
-   byte_len = 8
-   byte_size = 256
-
-   # Create list of CGC values
-   # MSBs only for the gray bytes 
-   gray_bytes = [bin(x/(byte_size / 2))[2:] for x in range(0, byte_size)] 
-   pure_bytes = [bin(x)[2:] for x in range(0, byte_size)]
-
-   # Create the conversion list
-   for byte in range(0, byte_size):
-      # Pad pbc list with 0s if necessary
-      if len(pure_bytes[byte]) < byte_len:
-         num_zeroes = byte_len - len(pure_bytes[byte])
-         pure_bytes[byte] = ('0' * num_zeroes) + pure_bytes[byte]
-      # Start from 1 since the MSB is identical
-      for bit in range(1, len(pure_bytes[byte])):
-         gray_bytes[byte] += str(int(pure_bytes[byte][bit - 1], base=2) ^ 
-                                 int(pure_bytes[byte][bit], base=2))
-
-   # Determine table formatting
-   if as_bytes == True:
-      for i in range(0, len(gray_bytes)):
-         gray_bytes[i] = int(gray_bytes[i], base=2)
-
-   return gray_bytes
-
-def pbc_to_cgc(byte_list):
-   """ Converts a set of bytes from Pure-Binary Coding to Canonical Gray Coding
    Params:
-      byte_list - List of integers representing bytes
+      image - The Image we want to convert to bytes
 
-   See http://www.datahide.com/BPCSe/pbc-vs-cgc-e.html for more information
-   on converting between PBC and CGC
+   Returns:
+      List of integers representing bytes of the image 
 
    """
-   gray_bytes = gen_cgc_table()
-
-   # Convert our given bytes to CGC
-   for i in range(0, len(byte_list)):
-      byte_list[i] = gray_bytes[byte_list[i]]
+   pixel_data = list(image.getdata())
+   return pixels_to_bytes(pixel_data)
 
 def pixels_to_bytes(pixel_list):
    """ Converts a list of pixels to a list of bytes
