@@ -31,26 +31,39 @@ def bpcs_embed(cover_image, data):
 
    # Convert image data to Canonical Gray Coding
    cgc_to_pbc(cover_data)
-   cgc_pixels = bytes_to_pixels(cover_data, num_color_bands)
+
+   # Need pixels formatted as lists instead of tuples so they can be changed
+   cgc_pixels = [cover_data[i:i + num_color_bands] 
+                for i in range(0, len(cover_data), num_color_bands)]
 
    # Embed ALL the data!
    while data != "":
       pixel_block = []
-      y_pos = block_index / image_height
       # Get a block of pixels to embed
-      # TODO: Verify that this works
-      for y in range(y_pos, y_pos + bl_height):
+      for y in range(0, bl_height):
          for x in range(block_index, block_index + bl_width):
             pixel_block.append(cgc_pixels[y * image_width + x])
 
       # Embed the pixel block
+      embed_block(pixel_block, data, bl_width, bl_height)
+
+      # Update pixels to reflect embedding
+      pblock_y = 0
+
+      for y in range(0, bl_height):
+         pblock_x = 0
+         for x in range(block_index, block_index + bl_width):
+            cgc_pixels[y * image_width + x] = pixel_block[pblock_y * bl_width + pblock_x]
+            pblock_x += 1
+         pblock_y += 1
 
       # Increment block index
       block_index = get_next_block(block_index, bl_width, bl_height,
                                    image_width) 
       break # Temporarily here to prevent infinite loops
 
-
+   # Flatten the CGC Pixels and use them for embedding the image
+   cover_data = [byte for pixel in cgc_pixels for byte in pixel]
 
    # Convert image data back to Pure-Binary Coding
    pbc_to_cgc(cover_data)
@@ -116,3 +129,25 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
    # Always increment by at least the block's width
    new_index += bl_width
    return new_index - 1 # Back to 0-based indices
+
+def embed_block(block, data, bl_width, bl_height):
+   """ Embeds a pixel block BPCS-style by modifying the block in place
+
+   Params:
+      block - A list of lists representing pixels (each sublist has 3 elements)
+      data - String of 0s and 1s to be embedded
+      bl_width - Width of the block we are embedding
+      bl_height - Height of the block we are embedding
+
+   """
+   # Determine complexity of the block
+
+   # TODO: Perform the actual embedding
+
+   # Test Code
+   for y in range(0, bl_height):
+      for x in range(0, bl_width):
+         band = 0
+         for i in block[y * bl_width + x]:
+            block[y * bl_width + x][band] = 255 - i
+            band += 1
