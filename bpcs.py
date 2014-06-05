@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from bit_manip import cgc_to_pbc
+from bit_manip import bit_from_byte
 from bit_manip import pbc_to_cgc
 from image_utils import bytes_to_pixels
 from image_utils import image_to_bytes
@@ -89,7 +90,7 @@ def calc_block_size(image_size):
    width = 0
 
    # Width
-   for i in range(1, image_size[0] + 1):
+   for i in range(1, image_size[0]):
       if image_size[0] % i == 0:
          width = i
       # Try to get biggest dimensions we can at or below the upper bound
@@ -104,6 +105,73 @@ def calc_block_size(image_size):
          break
 
    return (width, height)
+
+def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
+   """ Calculates a color's complexity for BPCS embedding purposes
+   
+   Params:
+      block - A list of lists representing pixels (each sublist has 3 elements)
+      color - Integer, Red = 0, Green = 1, Blue = 2
+      bit_plane - Integer from 0 to 7, 0 = MSB, 7 = LSB
+      bl_width - Width of the block we are checking
+      bl_height - Height of the block we are checking
+
+   Returns:
+      
+   """
+   # TODO: Verify that this function works
+   complexity = 0.0
+   num_bit_changes = 0
+   total_bit_changes = 0
+   total_header_len = 0
+
+   # Calculate complexity from left to right
+   for y in range(0, bl_height):
+      for x in range(0, bl_width):
+         # Stop if at the end
+         if (y == bl_height - 1 and x == bl_width - 1):
+            total_bit_changes += num_bit_changes
+            break
+         else:
+            curr_pos = y * bl_width + x
+            curr_bit = bit_from_byte(block[curr_pos][color], bit_plane)
+            next_bit = bit_from_byte(block[curr_pos + 1][color], bit_plane)
+            if next_bit == curr_bit:
+               # Need to calculate total number of color changes in the block
+               if num_bit_changes > 0:
+                  total_header_len += num_bit_changes
+               total_bit_changes += num_bit_changes
+               num_bit_changes = 0
+            else:
+               num_bit_changes += 1
+
+   num_bit_changes = 0
+
+   # Calculate complexity from top to bottom
+   for x in range(0, bl_width):
+      for y in range(0, bl_height):
+         # Stop if at the end
+         if (y == bl_height - 1 and x == bl_width - 1):
+            total_bit_changes += num_bit_changes
+            break
+         else:
+            curr_pos = y * bl_width + x
+            curr_bit = bit_from_byte(block[curr_pos][color], bit_plane)
+            next_bit = bit_from_byte(block[curr_pos + 1][color], bit_plane)
+            if next_bit == curr_bit:
+               # Need to calculate total number of color changes in the block
+               if num_bit_changes > 0:
+                  total_header_len += num_bit_changes
+               total_bit_changes += num_bit_changes
+               num_bit_changes = 0
+            else:
+               num_bit_changes += 1
+
+   # Add 1 since loops didn't cover last bit of the image
+   total_bit_changes += 1
+
+   return float(total_header_len) / total_bit_changes
+
 
 def get_next_block(curr_index, bl_width, bl_height, im_width):
    """ Increments the index so that we are at the position of the next block
@@ -130,6 +198,16 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
    new_index += bl_width
    return new_index - 1 # Back to 0-based indices
 
+def embed_bit_plane(block, color, bit_plane, data):
+   """
+
+
+   """
+
+   # Test code
+
+   pass
+
 def embed_block(block, data, bl_width, bl_height):
    """ Embeds a pixel block BPCS-style by modifying the block in place
 
@@ -140,14 +218,28 @@ def embed_block(block, data, bl_width, bl_height):
       bl_height - Height of the block we are embedding
 
    """
-   # Determine complexity of the block
+   bit_plane = 7 # Start at LSB
+   color = 0
+   threshold = 0.4 # Threshold for how complex a block is; bigger = complex
+   num_colors = 3 # RGB
 
-   # TODO: Perform the actual embedding
+   # Determine complexity of the message, conjugate if necessary
 
-   # Test Code
-   for y in range(0, bl_height):
-      for x in range(0, bl_width):
-         band = 0
-         for i in block[y * bl_width + x]:
-            block[y * bl_width + x][band] = 255 - i
-            band += 1
+
+   while True:
+      if bit_plane >= 0:
+         complexity = get_color_block_complexity(block, color, bit_plane,
+                                                 bl_width, bl_height)
+
+      if complexity <= threshold or bit_plane < 0:
+         color += 1
+         bit_plane = 7
+         if color == num_colors:
+            break
+      else:
+         # Test Code
+         for y in range(0, bl_height):
+            for x in range(0, bl_width):
+               target = y * bl_width + x
+               embed_bit_plane(block[target], color, bit_plane, data)
+         bit_plane -= 1

@@ -17,6 +17,20 @@ def ascii_to_bits(ascii_str):
 
    return bit_string
 
+def bit_from_byte(byte, bit_plane):
+   """ Retrieves a bit from a byte located at the specified index
+
+   Params:
+      byte - The byte to get the bit from
+      bit_plane - The index of the bit (0-7): 0 = MSB, 7 = LSB
+
+   Returns:
+      Integer of the bit: 0 or 1
+
+   """
+   # Subtract bit_plane from 7 to get the proper bit
+   return (byte >> (7 - bit_plane)) & 1
+
 def bits_to_ascii(bits):
    """ Converts a string of bits to ASCII text
 
@@ -129,4 +143,3 @@ def pbc_to_cgc(byte_list):
    # Convert our given bytes to CGC
    for i in range(0, len(byte_list)):
       byte_list[i] = gray_bytes[byte_list[i]]
-
