@@ -29,6 +29,7 @@ def bpcs_embed(cover_image, data):
    bl_width = block_size[0]
    bl_height = block_size[1]
    cover_data = image_to_bytes(cover_image)
+   threshold = 0.4 # Threshold for how complex a block is; bigger = complex
 
    # Convert image data to Canonical Gray Coding
    cgc_to_pbc(cover_data)
@@ -37,9 +38,29 @@ def bpcs_embed(cover_image, data):
    cgc_pixels = [cover_data[i:i + num_color_bands] 
                 for i in range(0, len(cover_data), num_color_bands)]
 
+   # Subtract 1 since each block will have a conjugation bit added
+   message_len = (bl_width * bl_height) - 1
+
+   # Convert the data into a blocky format
+   data = [data[i:i + message_len] for i in range(0, len(data), message_len)]
+   if len(data[-1]) < (message_len + 1): # Pad the last value with 1s and 0s
+      for i in range(0, (message_len) - len(data[-1])):
+         data[-1] = data[-1] + bin(i % 2)[2:]
+         
+   # Conjugate the message blocks that need it
+   for i in range(0, len(data)):
+      data[i] = "1" + data[i] # Add the conjugation bit first
+      block_complexity = get_msg_block_complexity(data[i], bl_width, bl_height)
+      if block_complexity < threshold:
+         pass # TODO: Conjugate block
+
+   # Flatten data
+   data = [bit for bit_string in data for bit in bit_string]
+
    # Embed ALL the data!
-   while data != "":
+   while data != []:
       pixel_block = []
+
       # Get a block of pixels to embed
       for y in range(0, bl_height):
          for x in range(block_index, block_index + bl_width):
@@ -62,7 +83,6 @@ def bpcs_embed(cover_image, data):
       # Increment block index
       block_index = get_next_block(block_index, bl_width, bl_height,
                                    image_width) 
-      break # Temporarily here to prevent infinite loops
 
    # Flatten the CGC Pixels and use them for embedding the image
    cover_data = [byte for pixel in cgc_pixels for byte in pixel]
@@ -71,7 +91,6 @@ def bpcs_embed(cover_image, data):
    pbc_to_cgc(cover_data)
    pixel_data = bytes_to_pixels(cover_data, num_color_bands)
    cover_image.putdata(pixel_data)
-
 
    # Save the embedded image
    cover_image.save(constants.PATH_STEGO + "BPCS_Steg.bmp")
@@ -118,19 +137,19 @@ def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
       bl_height - Height of the block we are checking
 
    Returns:
+      Floating point number x where 0.0 <= x <= 1.0
       
    """
    complexity = 0.0
    num_bit_changes = 0
-   total_bit_changes = 0
    total_header_len = 0
+   max_num_changes = ((bl_width - 1) * bl_height) + ((bl_height - 1) * bl_width)
 
    # Calculate complexity from left to right
    for y in range(0, bl_height):
       for x in range(0, bl_width):
          # Stop if at the end
          if (y == bl_height - 1 and x == bl_width - 1):
-            total_bit_changes += num_bit_changes
             break
          else:
             curr_pos = y * bl_width + x
@@ -140,7 +159,6 @@ def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
                # Need to calculate total number of color changes in the block
                if num_bit_changes > 0:
                   total_header_len += num_bit_changes
-               total_bit_changes += num_bit_changes
                num_bit_changes = 0
             else:
                num_bit_changes += 1
@@ -152,7 +170,6 @@ def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
       for y in range(0, bl_height):
          # Stop if at the end
          if (y == bl_height - 1 and x == bl_width - 1):
-            total_bit_changes += num_bit_changes
             break
          else:
             curr_pos = y * bl_width + x
@@ -162,15 +179,11 @@ def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
                # Need to calculate total number of color changes in the block
                if num_bit_changes > 0:
                   total_header_len += num_bit_changes
-               total_bit_changes += num_bit_changes
                num_bit_changes = 0
             else:
                num_bit_changes += 1
 
-   # Add 1 since loops didn't cover last bit of the image
-   total_bit_changes += 1
-
-   return float(total_header_len) / total_bit_changes
+   return float(total_header_len) / max_num_changes
 
 def get_msg_block_complexity(block, bl_width, bl_height):
    """ Calculates a message block's complexity
@@ -185,8 +198,8 @@ def get_msg_block_complexity(block, bl_width, bl_height):
 
    """
    complexity = 0.0
+   max_num_changes = ((bl_width - 1) * bl_height) + ((bl_height - 1) * bl_width)
    num_bit_changes = 0
-   total_bit_changes = 0
    total_header_len = 0
 
    # Calculate complexity from left to right
@@ -194,7 +207,6 @@ def get_msg_block_complexity(block, bl_width, bl_height):
       for x in range(0, bl_width):
          # Stop if at the end
          if (y == bl_height - 1 and x == bl_width - 1):
-            total_bit_changes += num_bit_changes
             break
          else:
             curr_pos = y * bl_width + x
@@ -204,7 +216,6 @@ def get_msg_block_complexity(block, bl_width, bl_height):
                # Need to calculate total number of changes in the block
                if num_bit_changes > 0:
                   total_header_len += num_bit_changes
-               total_bit_changes += num_bit_changes
                num_bit_changes = 0
             else:
                num_bit_changes += 1
@@ -216,7 +227,6 @@ def get_msg_block_complexity(block, bl_width, bl_height):
       for y in range(0, bl_height):
          # Stop if at the end
          if (y == bl_height - 1 and x == bl_width - 1):
-            total_bit_changes += num_bit_changes
             break
          else:
             curr_pos = y * bl_width + x
@@ -226,15 +236,11 @@ def get_msg_block_complexity(block, bl_width, bl_height):
                # Need to calculate total number of changes in the block
                if num_bit_changes > 0:
                   total_header_len += num_bit_changes
-               total_bit_changes += num_bit_changes
                num_bit_changes = 0
             else:
                num_bit_changes += 1
 
-   # Add 1 since loops didn't cover last bit of the image
-   total_bit_changes += 1
-
-   return float(total_header_len) / total_bit_changes
+   return float(total_header_len) / max_num_changes
 
 def get_next_block(curr_index, bl_width, bl_height, im_width):
    """ Increments the index so that we are at the position of the next block
@@ -252,7 +258,7 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
    num_width_blocks = im_width / bl_width
    new_index = curr_index + 1 # Make the index 1-based for modulus operations
 
-   # If we are at the end of the "row", drop down a couple "rows" and
+   # If we are at the end of the "row", drop down a couple "rows"
    if (new_index + (bl_width - 1)) % (num_width_blocks * bl_width) == 0:
       new_index += (((bl_height - 1) * im_width) + 
                    (im_width - (bl_width * num_width_blocks)))
@@ -266,17 +272,22 @@ def embed_bit_plane(block, color, bit_plane, data):
 
    Params:
       block - List of 3 RGB integers
-      color - The index for the pixel block that will change the color
+      color - The index for the block of which color will be changed
       bit_plane - Integer from 0 to 7, 0 = MSB, 7 = LSB
-      data - String of 1s and 0s to be embedded
+      data - String of a 1 or 0 to be embedded
 
    """
+   block_bit = bit_from_byte(block[color], bit_plane)
+   new_bit = int(data, base=2)
+   bit_distance = 7 - bit_plane
+   bit_val = 1 << bit_distance 
 
-   #print block, color, bit_plane, len(data)
-
-   # Test code
-   block[color] = 0
-
+   if block_bit > new_bit:
+      block[color] -= bit_val
+   elif block_bit < new_bit:
+      block[color] += bit_val
+   else:
+      pass
 
 def embed_block(block, data, bl_width, bl_height):
    """ Embeds a pixel block BPCS-style by modifying the block in place
@@ -297,42 +308,26 @@ def embed_block(block, data, bl_width, bl_height):
    color = 0
    threshold = 0.4 # Threshold for how complex a block is; bigger = complex
    num_colors = 3 # RGB
-   # Subtract 1 since each block will have a conjugation bit added
-   message_len = (bl_width * bl_height) - 1
 
-   # Convert the data into a blocky format
-   data = [data[i:i + message_len] for i in range(0, len(data), message_len)]
-   if len(data[-1]) < (message_len + 1): # Pad the last value with 1s and 0s
-      for i in range(0, (message_len) - len(data[-1])):
-         data[-1] = data[-1] + bin(i % 2)[2:]
-         
-   # Conjugate the message blocks that need it
-   for i in range(0, len(data)):
-      data[i] = "1" + data[i] # Add the conjugation bit first
-      block_complexity = get_msg_block_complexity(data[i], bl_width, bl_height)
-      if block_complexity < threshold:
-         pass # TODO: Conjugate block
-
-   # Flatten data
-   data = [bit for bit_string in data for bit in bit_string]
-
-   while data != []:
+   while True:
       if bit_plane >= 0:
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
       if complexity <= threshold or bit_plane < 0:
          color += 1
          bit_plane = 7
-         if color == num_colors:
+         if color == num_colors: # Ran out of colors
             break
       else:
          # Test Code
          for y in range(0, bl_height):
             for x in range(0, bl_width):
                target = y * bl_width + x
-               embed_bit_plane(block[target], color, bit_plane, data)
-               bits_embedded += 1
-               data = data[1:]
+               if bits_embedded == len(data): # Embedded all the bits we can
+                  break
+               else:
+                  embed_bit_plane(block[target], color, bit_plane, data[bits_embedded])
+                  bits_embedded += 1
          bit_plane -= 1
 
    return bits_embedded
