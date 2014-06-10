@@ -30,3 +30,6 @@ AUDIO = 0
 IMAGE = 1
 TEXT  = 2
 VIDEO = 3
+
+# Misc
+THRESHOLD = 0.4

@@ -33,3 +33,5 @@ else:
       embed_data(data)
    elif data["action"] == constants.ACTION_EXTRACT:
       decode_data(data)
+   else:
+      print "Invalid action specified!"

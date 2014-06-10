@@ -8,6 +8,68 @@ from image_utils import image_to_bytes
 from image_utils import get_num_color_bands
 import constants
 
+def bpcs_decode(stego_data, image_size, header_len):
+   """ Decodes a stego-image that was embedded using BPCS
+
+   Params:
+      stego_data - List of bytes representing pixels of the image
+      image_size - Tuple that contains data (Width, Height) of the image
+      header_len - # of bits used to indicate hidden message length
+
+   Returns:
+      String of 0s and 1s representing the decoded data
+
+   """
+   bits_read = 0
+   block_index = 0
+   block_size = calc_block_size(image_size)
+   bl_width = block_size[0]
+   bl_height = block_size[1]
+   decoded_data = "" 
+   image_width = image_size[0]
+   image_height = image_size[1]
+   num_color_bands = 3
+
+   # Convert image data to Canonical Gray Coding
+   cgc_to_pbc(stego_data)
+
+   # Pixel formatting
+   cgc_pixels = [stego_data[i:i + num_color_bands] 
+                for i in range(0, len(stego_data), num_color_bands)]
+
+   # Read the header bits
+   while len(decoded_data) < header_len:
+      pixel_block = []
+
+      # Get a block of pixels to decode
+      for y in range(0, bl_height):
+         for x in range(block_index, block_index + bl_width):
+            pixel_block.append(cgc_pixels[y * image_width + x])
+
+      # Decode pixels
+      decoded_data += decode_block(pixel_block, bl_width, bl_height)
+
+      # Increment block index
+      block_index = get_next_block(block_index, bl_width, bl_height,
+                                   image_width) 
+
+   # Get message length, shave off header bits
+   decode_len = int(decoded_data[0:header_len], base=2)
+   decoded_data = decoded_data[header_len:]
+
+   # Decode ALL the data!
+   while len(decoded_data) < decode_len:
+      for y in range(0, bl_height):
+         for x in range(block_index, block_index + bl_width):
+            pixel_block.append(cgc_pixels[y * image_width + x])
+
+      decoded_data += decode_block(pixel_block, bl_width, bl_height)
+
+      block_index = get_next_block(block_index, bl_width, bl_height,
+                                   image_width) 
+
+   return "0" + decoded_data
+
 def bpcs_embed(cover_image, data):
    """ Embeds a cover image using Bit-Plane Complexity Segmentation
 
@@ -29,7 +91,6 @@ def bpcs_embed(cover_image, data):
    bl_width = block_size[0]
    bl_height = block_size[1]
    cover_data = image_to_bytes(cover_image)
-   threshold = 0.4 # Threshold for how complex a block is; bigger = complex
 
    # Convert image data to Canonical Gray Coding
    cgc_to_pbc(cover_data)
@@ -49,10 +110,10 @@ def bpcs_embed(cover_image, data):
          
    # Conjugate the message blocks that need it
    for i in range(0, len(data)):
-      data[i] = "1" + data[i] # Add the conjugation bit first
+      data[i] = "0" + data[i] # Add the conjugation bit first
       block_complexity = get_msg_block_complexity(data[i], bl_width, bl_height)
-      if block_complexity < threshold:
-         pass # TODO: Conjugate block
+      if block_complexity < constants.THRESHOLD:
+         data[i] = conjugate_block(data[i], bl_width, bl_height)
 
    # Flatten data
    data = [bit for bit_string in data for bit in bit_string]
@@ -125,6 +186,117 @@ def calc_block_size(image_size):
          break
 
    return (width, height)
+
+def conjugate_block(data, bl_width, bl_height):
+   """ Conjugates a block so that it is more suitable to embed
+   
+   Params:
+      data - String of 0s and 1s to be conjugated
+      bl_width - The width of the message block
+      bl_height - The height of the message block
+
+   Returns:
+      String of conjugated 1s and 0s
+
+   """
+   conjugated_block = "1" # First bit indicates the block is conjugated
+
+   # The "white checkerboard" is used to xor bits of the original message
+   # to create the conjugated version of the message. First bit is white (0),
+   # then black (1), white (0), and so on
+   white_checkerboard = gen_white_checkerboard(bl_width, bl_height)
+
+   for y in range(0, bl_height):
+      for x in range(0, bl_width):
+         if x == 0 and y == 0:
+            continue
+         else:
+            curr_pos = y * bl_width + x
+            data_bit = int(data[curr_pos], base=2)
+            board_bit = int(white_checkerboard[curr_pos], base=2)
+            conjugated_block += str(data_bit ^ board_bit)
+
+   return conjugated_block
+
+def decode_bit_plane(block, color, bit_plane):
+   """ Decodes a bit plane of a single pixel and single color
+
+   Params:
+      block - List of 3 RGB integers
+      color - The index for the block of which color will be changed
+      bit_plane - Integer from 0 to 7, 0 = MSB, 7 = LSB
+
+   """
+
+   return str(bit_from_byte(block[color], bit_plane))
+
+def decode_block(block, bl_width, bl_height):
+   """ Decodes a pixel block BPCS-style
+
+   Params:
+      block - A list of lists representing pixels (each sublist has 3 elements)
+      bl_width - Width of the block we are decoding
+      bl_height - Height of the block we are decoding
+
+   Returns:
+      String of decoded 0s and 1s
+
+   """
+   bits_decoded = ""
+   bit_plane = 7 # Start at LSB
+   color = 0
+   num_colors = 3 # RGB
+
+   while True:
+      if bit_plane >= 0:
+         complexity = get_color_block_complexity(block, color, bit_plane,
+                                                 bl_width, bl_height)
+      if complexity < constants.THRESHOLD or bit_plane < 0:
+         color += 1
+         bit_plane = 7
+         if color == num_colors: # Ran out of colors
+            break
+      else:
+         # Decode the block
+         block_bits = ""
+         for y in range(0, bl_height):
+            for x in range(0, bl_width):
+               target = y * bl_width + x
+               block_bits += decode_bit_plane(block[target], color, bit_plane)
+
+         # Deconjugate blocks as needed
+         if block_bits[0] == "1":
+            block_bits = deconjugate_block(block_bits, bl_width, bl_height)
+            
+         bits_decoded += block_bits 
+         bit_plane -= 1
+
+   return bits_decoded
+
+def deconjugate_block(data, bl_width, bl_height):
+   """ Deconjugates a conjugated block
+   
+   Params:
+      data - String of 0s and 1s to be deconjugated
+      bl_width - The width of the message block
+      bl_height - The height of the message block
+
+   Returns:
+      String of deconjugated 1s and 0s
+
+   """
+
+   dec_bits = ""
+   white_checkerboard = gen_white_checkerboard(bl_width, bl_height)
+
+   # Start from 1 to strip the conjugation bit
+   for i in range(1, len(data)):
+      if data[i] == white_checkerboard[i]:
+         dec_bits += "0"
+      else:
+         dec_bits += "1"
+
+   return dec_bits
 
 def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
    """ Calculates a color's complexity for BPCS embedding purposes
@@ -267,6 +439,24 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
    new_index += bl_width
    return new_index - 1 # Back to 0-based indices
 
+def gen_white_checkerboard(bl_width, bl_height):
+   """ Generates a white checkerboard
+
+   Params:
+      bl_width - The width of the board
+      bl_height - The height of the board
+
+   Returns:
+      String of alternating 0s and 1s 
+
+   """
+   white_checkerboard = ""
+
+   for i in range(0, (bl_width * bl_height)):
+      white_checkerboard += bin(i % 2)[2:]
+
+   return white_checkerboard
+
 def embed_bit_plane(block, color, bit_plane, data):
    """ Embeds a bit plane of a single pixel and single color
 
@@ -304,29 +494,27 @@ def embed_block(block, data, bl_width, bl_height):
    """
    bits_embedded = 0
    bit_plane = 7 # Start at LSB
-   block_complexity = 0.0
    color = 0
-   threshold = 0.4 # Threshold for how complex a block is; bigger = complex
    num_colors = 3 # RGB
 
    while True:
       if bit_plane >= 0:
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
-      if complexity <= threshold or bit_plane < 0:
+      if complexity < constants.THRESHOLD or bit_plane < 0:
          color += 1
          bit_plane = 7
          if color == num_colors: # Ran out of colors
             break
       else:
-         # Test Code
          for y in range(0, bl_height):
             for x in range(0, bl_width):
                target = y * bl_width + x
                if bits_embedded == len(data): # Embedded all the bits we can
                   break
                else:
-                  embed_bit_plane(block[target], color, bit_plane, data[bits_embedded])
+                  embed_bit_plane(block[target], color, bit_plane, 
+                                  data[bits_embedded])
                   bits_embedded += 1
          bit_plane -= 1
 

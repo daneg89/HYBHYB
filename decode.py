@@ -2,6 +2,7 @@
 
 from bit_manip import bits_to_ascii
 from bit_manip import bits_to_bytes
+from bpcs import bpcs_decode
 from file_utils import calc_msg_header_len
 from file_utils import create_header
 from file_utils import get_file_type
@@ -60,18 +61,18 @@ def decode_image(target_obj_path, key, method):
    target_data = pixels_to_bytes(pixel_data)
 
    if method == constants.BPCS:
-      pass
+      decode_results = bpcs_decode(target_data, target_obj.size, header_len)
    else:
       decode_results = lsb_decode(target_data, header_len, key)
-      plaintext_bit = decode_results[0:1]
 
-      if plaintext_bit == "0":
-         is_plaintext = False
-      else:
-         is_plaintext = True
+   plaintext_bit = decode_results[0:1]
+
+   if plaintext_bit == "0":
+      is_plaintext = False
+   else:
+      is_plaintext = True
 
    write_result(decode_results[1:], is_plaintext)
-
 
 def write_result(data, is_plaintext):
    """ Takes the results of the decoding and writes them out
