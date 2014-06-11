@@ -8,9 +8,6 @@ from image_utils import image_to_bytes
 from image_utils import get_num_color_bands
 import constants
 
-dec_comp = 0
-emb_comp = 0
-
 def bpcs_decode(stego_data, image_size, header_len):
    """ Decodes a stego-image that was embedded using BPCS
 
@@ -77,8 +74,6 @@ def bpcs_decode(stego_data, image_size, header_len):
    if len(decoded_data) > decode_len:
       decoded_data = decoded_data[0:decode_len] 
 
-   global dec_comp
-   print "dec comp", dec_comp
    return decoded_data
 
 def bpcs_embed(cover_image, data):
@@ -166,9 +161,6 @@ def bpcs_embed(cover_image, data):
 
    # Save the embedded image
    cover_image.save(constants.PATH_STEGO + "BPCS_Steg.bmp")
-
-   global emb_comp
-   print "emb comp", emb_comp
 
 def calc_block_size(image_size):
    """ Calculates message block size for embedding
@@ -265,9 +257,6 @@ def decode_block(block, bl_width, bl_height):
       if bit_plane >= 0:
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
-      if complexity < constants.THRESHOLD:
-         global dec_comp
-         dec_comp += 1
       if complexity < constants.THRESHOLD or bit_plane < 0:
          color += 1
          bit_plane = 7
@@ -519,9 +508,6 @@ def embed_block(block, data, bl_width, bl_height):
       if bit_plane >= 0:
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
-      if complexity < constants.THRESHOLD:
-         global emb_comp
-         emb_comp += 1
       if complexity < constants.THRESHOLD or bit_plane < 0:
          color += 1
          bit_plane = 7
