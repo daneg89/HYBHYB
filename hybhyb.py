@@ -2,6 +2,7 @@
 
 def init():
    """ Initialize some things to make things run smoothly """
+   sys.path.append("steganalysis")
    sys.path.append("utils")
 
 # TODO: Implement
