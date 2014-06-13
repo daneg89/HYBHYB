@@ -1,5 +1,23 @@
 #!/usr/bin/python
 
+def bnw_palette(img_palette):
+   """ Changes an image's palette so that the colors are black and white
+
+   Params:
+      img_palette - List of 768 integers (3 colors for 256 palette colors)
+   """
+
+   # Alternate between black and white
+   for i in range(0, len(img_palette), 3):
+      if i % 2 == 0: # Black
+         img_palette[i] = 0
+         img_palette[i + 1] = 0
+         img_palette[i + 2] = 0
+      else: # White
+         img_palette[i] = 255
+         img_palette[i + 1] = 255
+         img_palette[i + 2] = 255
+
 def bytes_to_pixels(byte_list, num_color_bands):
    """ Takes an array of integers and coverts it into pixel format (tuples)
 

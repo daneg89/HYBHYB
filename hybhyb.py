@@ -19,6 +19,8 @@ init()
 from arg_handler import parse_args
 from decode import decode_data
 from embed import embed_data
+from visual import filtered_visual_attack
+from visual import visual_attack
 import arg_handler
 import constants
 
@@ -33,5 +35,9 @@ else:
       embed_data(data)
    elif data["action"] == constants.ACTION_EXTRACT:
       decode_data(data)
+   elif data["action"] == constants.ACTION_FILTERED_VIS_ATK:
+      filtered_visual_attack(data["target_obj"])
+   elif data["action"] == constants.ACTION_VIS_ATK:
+      visual_attack(data["target_obj"])
    else:
       print "Invalid action specified!"

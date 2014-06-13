@@ -23,6 +23,7 @@ EXTENSIONS = ["jpg", "jpeg", "bmp", "gif", "png"]
 PATH_COVER = "cover_objects/"
 PATH_DETECT = "detect_statistics/"
 PATH_EXTRACT = "extracted_objects/"
+PATH_STEGA = "steganalysis/"
 PATH_STEGO = "stego_objects/"
 
 # File types
@@ -32,4 +33,4 @@ TEXT  = 2
 VIDEO = 3
 
 # Misc
-THRESHOLD = 0.4
+THRESHOLD = 0.5
