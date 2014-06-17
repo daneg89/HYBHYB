@@ -33,13 +33,10 @@ def lsb_decode(target_data, header_len, key=""):
    # +1 is to account for the plaintext bit
    decode_sequence = decode_sequence[header_len:embed_len + header_len + 1]
 
-   decoded_data = ""
-   # Read the bits from the file
-   for i in range(0, len(decode_sequence)):
-      decoded_data += str(target_data[decode_sequence[i]] & 1)
+   # Read the bits from the image
+   decoded_data = [str(target_data[loc] & 1) for loc in decode_sequence]
 
-   return decoded_data
-
+   return ''.join(decoded_data)
 
 def lsb_embed(cover_data, target_data, key=""):
    """ Performs a Least Significant Bit embedding of a cover object

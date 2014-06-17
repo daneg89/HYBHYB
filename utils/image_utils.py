@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from PIL import Image
+
 def bnw_palette(img_palette):
    """ Changes an image's palette so that the colors are black and white
 
@@ -88,6 +90,27 @@ def image_to_bytes(image):
    pixel_data = list(image.getdata())
    return pixels_to_bytes(pixel_data)
 
+def is_grayscale(image):
+   """ Checks to see if an image is grayscale or not
+
+   Params:
+      image - The Image we are checking
+
+   Returns:
+      True or False
+
+   """
+
+   palette = image.getpalette()
+   is_grayscale = True
+
+   # Go over half the pixels and see if the RGB values match
+   for i in range(0, len(palette) / 2, 3):
+      if palette[i] != palette[i + 1] and palette[i] != palette[i + 2]:
+         is_grayscale = False
+
+   return is_grayscale
+
 def pixels_to_bytes(pixel_list):
    """ Converts a list of pixels to a list of bytes
 
@@ -119,7 +142,12 @@ def sort_palette(palette_image):
    old_palette = palette_image.getpalette()
    # Create a new palette that we can sort
    new_palette = [old_palette[i:i + 3] for i in range(0, len(old_palette), 3)]
-   new_palette.sort()
+
+   if is_grayscale(palette_image): # Grayscale sorted normally
+      new_palette.sort()
+   else: # Color sorted by luminosity
+      new_palette = sorted(new_palette, key=sum) # Sort by pixel luminosity
+
    old_palette = [old_palette[i:i + 3] for i in range(0, len(old_palette), 3)]
 
    # Create the pixel map
