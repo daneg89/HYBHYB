@@ -32,16 +32,16 @@ def embed_data(data):
    except: # TODO: Catch the exception
       pass
 
-   # TODO: Generate message if garbage
-
    if cover_file_type == constants.IMAGE:
       embed_image(data["cover_obj"], data["target_obj"], data["key"], 
-                  data["method"], data["show_image"], data["message"])
+                  data["method"], data["show_image"], data["message"],
+                  data["garbage"])
    else:
       print "Unsupported file type!"
 
 
-def embed_image(cover_obj_path, target_obj_path, key, method, show_image, message):
+def embed_image(cover_obj_path, target_obj_path, key, method, show_image,
+                message, garbage):
    """ Function that handles image embedding
 
    Params:
@@ -51,14 +51,19 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
       method - Integer representing the embedding method
       show_image - Show the image after it's embedded?
       message - The plaintext message that will be embedded (if no target obj)
+      garbage - Boolean that indicates if message should be generated or not
 
    """
 
    cover_obj = Image.open(cover_obj_path).copy() # Don't modify orig img
    color_depth = image_utils.get_color_depth(cover_obj.mode)
+   message_bits = ""
    num_color_bands = image_utils.get_num_color_bands(cover_obj.mode)
    num_pixels = (cover_obj.size[0] * cover_obj.size[1]) # Width * Height
    num_embeddable_bits = (num_pixels * color_depth)
+
+   # Calculate number of bits we can embed
+   embed_capacity = est_embed_capacity(num_embeddable_bits, method)
 
    # Create the header
    header_len = calc_msg_header_len(num_embeddable_bits)
@@ -67,14 +72,17 @@ def embed_image(cover_obj_path, target_obj_path, key, method, show_image, messag
       message_bits = ascii_to_bits(message)
       plaintext_bit = "1"
    else: # File
-      message_bits = file_to_bits(target_obj_path)
+      if garbage == True:
+         fake_header = create_header(header_len, num_embeddable_bits)
+         for i in range (0, (embed_capacity - (len(fake_header) + 1))):
+            message_bits += str(i % 2)
+      else:
+         message_bits = file_to_bits(target_obj_path)
+
       plaintext_bit = "0"
 
    header_bits = create_header(header_len, len(message_bits))
    embed_data = header_bits + plaintext_bit + message_bits
-
-   # Calculate number of bits we can embed
-   embed_capacity = est_embed_capacity(num_embeddable_bits, method)
 
    # Check bits > capacity
    if len(embed_data) > embed_capacity:

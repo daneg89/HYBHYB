@@ -21,6 +21,8 @@ def get_action(action_flag):
       action = ACTION_VIS_ATK
    elif "-f" == action_flag:
       action = ACTION_FILTERED_VIS_ATK
+   elif "-s" == action_flag:
+      action = ACTION_HIST_ATK
    else:
       print "Args validator messed up!"
 
@@ -65,7 +67,6 @@ def parse_args(args):
          > "target_obj": String
          > "key": String
          > "method": Int
-         > "stats_mode": Bool
          > "show_image": Bool
          > "message": String
          > "garbage": Bool
@@ -78,13 +79,12 @@ def parse_args(args):
       raise Exception # TODO: make more specific
 
    action = -1
-   actions = ["-e", "-x", "-d", "-v", "-f"]
+   actions = ["-e", "-x", "-d", "-v", "-f", "-s"]
    key = ""
    garbage = False
    message = ""
    method = -1
    methods = ["-l", "-b"]
-   stats_mode = False
    target_obj = None
    cover_obj = None
    show_image = False
@@ -100,8 +100,6 @@ def parse_args(args):
          key = flag[2:] 
       elif flag[0:2] == "-m":
          message = flag[2:]
-      elif flag == "-s":
-         stats_mode = True
       elif flag == "--show-image":
          show_image = True 
       # Assume at this point that the flag is actually a file
@@ -111,11 +109,11 @@ def parse_args(args):
          else:
             cover_obj = flag
 
-   if message != "":
+   if message != "" or garbage == True:
       cover_obj = target_obj
       target_obj = None
 
-   return { "action": action, "cover_obj": cover_obj, "target_obj": target_obj, "key": key, "method": method, "stats_mode": stats_mode, "show_image": show_image, "message": message, "garbage": garbage }
+   return { "action": action, "cover_obj": cover_obj, "target_obj": target_obj, "key": key, "method": method, "show_image": show_image, "message": message, "garbage": garbage }
 
 def valid_args(args):
    """
