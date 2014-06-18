@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from PIL import Image
+import math
 
 def bnw_palette(img_palette):
    """ Changes an image's palette so that the colors are black and white
@@ -146,7 +147,7 @@ def sort_palette(palette_image):
    if is_grayscale(palette_image): # Grayscale sorted normally
       new_palette.sort()
    else: # Color sorted by luminosity
-      new_palette = sorted(new_palette, key=sum) # Sort by pixel luminosity
+      new_palette = sort_palette_by_euclid_distance(new_palette)
 
    old_palette = [old_palette[i:i + 3] for i in range(0, len(old_palette), 3)]
 
@@ -166,3 +167,32 @@ def sort_palette(palette_image):
    # Create one contiguous palette
    new_palette = [palette_val for sublist in new_palette for palette_val in sublist]
    palette_image.putpalette(new_palette)
+
+def sort_palette_by_euclid_distance(palette):
+   """ Sorts a "palette" by using euclidean distance
+
+   Params:
+      palette - List of 3 integer lists representing colors of a pixel
+
+   """
+   new_palette = []
+
+   # Get the lowest luminosity value and set it first
+   palette = sorted(palette, key=sum) # Sort by pixel luminosity
+   new_palette.append(palette[0])
+   palette.remove(new_palette[0])
+
+   num_iterations = len(palette)
+   for i in range(0, num_iterations):
+      best_dist = 100000.0
+      for color in palette:
+         dist = math.sqrt((new_palette[i][0] - color[0]) ** 2 + 
+                          (new_palette[i][1] - color[1]) ** 2 + 
+                          (new_palette[i][2] - color[2]) ** 2) 
+         if dist < best_dist:
+            best_dist = dist
+            closest_color = color
+      palette.remove(closest_color)
+      new_palette.append(closest_color)
+
+   return new_palette
