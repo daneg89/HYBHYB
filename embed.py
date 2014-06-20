@@ -29,8 +29,9 @@ def embed_data(data):
    """
    try:
       cover_file_type = get_file_type(data["cover_obj"])
-   except: # TODO: Catch the exception
-      pass
+   except:
+      print "Cover object type not recognized. Provide a valid cover object!"
+      exit()
 
    if cover_file_type == constants.IMAGE:
       embed_image(data["cover_obj"], data["target_obj"], data["key"], 
@@ -121,7 +122,7 @@ def est_embed_capacity(num_bits, method):
    if method == constants.LSB:
       return num_bits / 8 # ~12.5%
    elif method == constants.BPCS:
-      return num_bits / 4 # 25%
+      return num_bits / 4 # ~25%
    else:
       return 0
 

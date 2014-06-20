@@ -20,6 +20,10 @@ def histogram_attack(img_path):
    img_histogram = filter(lambda val: val > 0, img_histogram)
    num_pixels = sum(img_histogram)
 
+   # Need an even number of pairs for this to work
+   if len(img_histogram) % 2 == 1:
+      img_histogram = img_histogram[:-1]
+
    # Get the differences between each pair of values
    pair_differences = [abs(img_histogram[i] - img_histogram[i + 1]) 
                        for i in range(0, len(img_histogram), 2)]

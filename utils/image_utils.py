@@ -195,4 +195,10 @@ def sort_palette_by_euclid_distance(palette):
       palette.remove(closest_color)
       new_palette.append(closest_color)
 
+   test_palette = []
+   for i in range(0, len(new_palette) - 1):
+      test_palette.append(round(math.sqrt((new_palette[i][0] - color[0]) ** 2 + 
+                                    (new_palette[i][1] - color[1]) ** 2 + 
+                                    (new_palette[i][2] - color[2]) ** 2), 0))
+
    return new_palette

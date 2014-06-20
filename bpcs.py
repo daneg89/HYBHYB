@@ -502,12 +502,17 @@ def embed_block(block, data, bl_width, bl_height):
    bits_embedded = 0
    bit_plane = 7 # Start at LSB
    color = 0
+   lsb = 7
    num_colors = 3 # RGB
 
    while True:
       if bit_plane >= 0:
-         complexity = get_color_block_complexity(block, color, bit_plane,
-                                                 bl_width, bl_height)
+         
+         if bit_plane == lsb: # Always embed LSB
+            complexity = 1.0
+         else:
+            complexity = get_color_block_complexity(block, color, bit_plane,
+                                                   bl_width, bl_height)
       if complexity < constants.THRESHOLD or bit_plane < 0:
          color += 1
          bit_plane = 7
