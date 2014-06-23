@@ -57,7 +57,7 @@ def lsb_embed(cover_data, target_data, key=""):
       embed_sequence = range(0, cover_len)
    else: # Randomly
       random.seed(key)
-      embed_sequence = random.sample(range(0, cover_len), cover_len - 1)
+      embed_sequence = random.sample(range(0, cover_len), cover_len)
 
    # Slice off the values we don't need
    embed_sequence = embed_sequence[0:embed_len]
