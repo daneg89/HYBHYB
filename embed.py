@@ -30,7 +30,7 @@ def embed_data(data):
    try:
       cover_file_type = get_file_type(data["cover_obj"])
    except:
-      print "Cover object type not recognized. Provide a valid cover object!"
+      print "Cover object type not recognized or missing. Provide a valid cover object!"
       exit()
 
    if cover_file_type == constants.IMAGE:

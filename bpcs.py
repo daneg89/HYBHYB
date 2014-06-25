@@ -25,7 +25,7 @@ def bpcs_decode(stego_data, image_size, header_len):
    block_size = calc_block_size(image_size)
    bl_width = block_size[0]
    bl_height = block_size[1]
-   decoded_data = "" 
+   decoded_data = ""
    image_width = image_size[0]
    image_height = image_size[1]
    num_color_bands = 3
@@ -34,7 +34,7 @@ def bpcs_decode(stego_data, image_size, header_len):
    cgc_to_pbc(stego_data)
 
    # Pixel formatting
-   cgc_pixels = [stego_data[i:i + num_color_bands] 
+   cgc_pixels = [stego_data[i:i + num_color_bands]
                 for i in range(0, len(stego_data), num_color_bands)]
 
    # Read the header bits
@@ -51,7 +51,7 @@ def bpcs_decode(stego_data, image_size, header_len):
 
       # Increment block index
       block_index = get_next_block(block_index, bl_width, bl_height,
-                                   image_width) 
+                                   image_width)
 
    # Get message length, shave off header bits
    # +1 to account for plaintext bit
@@ -68,11 +68,11 @@ def bpcs_decode(stego_data, image_size, header_len):
       decoded_data += decode_block(pixel_block, bl_width, bl_height)
 
       block_index = get_next_block(block_index, bl_width, bl_height,
-                                   image_width) 
+                                   image_width)
 
    # Truncate any extra bits if necessary
    if len(decoded_data) > decode_len:
-      decoded_data = decoded_data[0:decode_len] 
+      decoded_data = decoded_data[0:decode_len]
 
    return decoded_data
 
@@ -102,7 +102,7 @@ def bpcs_embed(cover_image, data):
    cgc_to_pbc(cover_data)
 
    # Need pixels formatted as lists instead of tuples so they can be changed
-   cgc_pixels = [cover_data[i:i + num_color_bands] 
+   cgc_pixels = [cover_data[i:i + num_color_bands]
                 for i in range(0, len(cover_data), num_color_bands)]
 
    # Subtract 1 since each block will have a conjugation bit added
@@ -135,7 +135,12 @@ def bpcs_embed(cover_image, data):
 
       # Embed the pixel block
       bits_embedded = embed_block(pixel_block, data, bl_width, bl_height)
-      data = data[bits_embedded:]
+
+      # Shorten the data so we don't have to copy it over to a new list
+      if bits_embedded > len(data):
+         data = []
+      else:
+         del data[0:bits_embedded]
 
       # Update pixels to reflect embedding
       pblock_y = 0
@@ -149,7 +154,7 @@ def bpcs_embed(cover_image, data):
 
       # Increment block index
       block_index = get_next_block(block_index, bl_width, bl_height,
-                                   image_width) 
+                                   image_width)
 
    # Flatten the CGC Pixels and use them for embedding the image
    cover_data = [byte for pixel in cgc_pixels for byte in pixel]
@@ -195,7 +200,6 @@ def calc_block_size(image_size):
 
 def conjugate_block(data, bl_width, bl_height):
    """ Conjugates a block so that it is more suitable to embed
-   
    Params:
       data - String of 0s and 1s to be conjugated
       bl_width - The width of the message block
@@ -251,12 +255,24 @@ def decode_block(block, bl_width, bl_height):
    bits_decoded = ""
    bit_plane = 7 # Start at LSB
    color = 0
+   conjugation_offset = 0
    num_colors = 3 # RGB
 
    while True:
       if bit_plane >= 0:
+         # Set the conjugation bits temporarily to 0 to get the 
+         # "true" complexity
+         for i in range(0, bit_plane):
+            if bit_from_byte(block[0][color], i) == 1:
+               conjugation_offset += 1 << (7 - i)
+
+         block[0][color] -= conjugation_offset
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
+         # Restore conjugation bits
+         block[0][color] += conjugation_offset
+         conjugation_offset = 0
+
       if complexity < constants.THRESHOLD or bit_plane < 0:
          color += 1
          bit_plane = 7
@@ -275,16 +291,15 @@ def decode_block(block, bl_width, bl_height):
             block_bits = deconjugate_block(block_bits, bl_width, bl_height)
          else:
             # Need to strip the conjugation bit or causes problems
-            block_bits = block_bits[1:] 
+            block_bits = block_bits[1:]
             
-         bits_decoded += block_bits 
+         bits_decoded += block_bits
          bit_plane -= 1
 
    return bits_decoded
 
 def deconjugate_block(data, bl_width, bl_height):
    """ Deconjugates a conjugated block
-   
    Params:
       data - String of 0s and 1s to be deconjugated
       bl_width - The width of the message block
@@ -308,7 +323,6 @@ def deconjugate_block(data, bl_width, bl_height):
 
 def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
    """ Calculates a color's complexity for BPCS embedding purposes
-   
    Params:
       block - A list of lists representing pixels (each sublist has 3 elements)
       color - Integer, Red = 0, Green = 1, Blue = 2
@@ -318,108 +332,60 @@ def get_color_block_complexity(block, color, bit_plane, bl_width, bl_height):
 
    Returns:
       Floating point number x where 0.0 <= x <= 1.0
-      
    """
-   complexity = 0.0
-   num_bit_changes = 0
-   total_header_len = 0
-   max_num_changes = ((bl_width - 1) * bl_height) + ((bl_height - 1) * bl_width)
+   max_num_changes = get_max_num_changes(bl_width, bl_height)
 
-   # Calculate complexity from left to right
-   for y in range(0, bl_height):
-      for x in range(0, bl_width):
-         # Stop if at the end
-         if (y == bl_height - 1 and x == bl_width - 1):
-            total_header_len += num_bit_changes
-            break
-         else:
-            curr_pos = y * bl_width + x
-            curr_bit = bit_from_byte(block[curr_pos][color], bit_plane)
-            next_bit = bit_from_byte(block[curr_pos + 1][color], bit_plane)
-            if next_bit == curr_bit:
-               # Calculate total number of color changes in the block
-               total_header_len += num_bit_changes
-               num_bit_changes = 0
-            else:
-               num_bit_changes += 1
+   # Get the values from the block that we need
+   main_block = [bcolor[color] for bcolor in block]
 
-   num_bit_changes = 0
+   l_to_r_complexity = left_to_right_complexity(main_block, bit_plane,
+                                                bl_width, bl_height)
+   t_to_b_complexity = top_to_bottom_complexity(main_block, bit_plane,
+                                                bl_width, bl_height)
 
-   # Calculate complexity from top to bottom
-   for x in range(0, bl_width):
-      for y in range(0, bl_height):
-         # Stop if at the end
-         if (y == bl_height - 1 and x == bl_width - 1):
-            total_header_len += num_bit_changes
-            break
-         else:
-            curr_pos = y * bl_width + x
-            curr_bit = bit_from_byte(block[curr_pos][color], bit_plane)
-            next_bit = bit_from_byte(block[curr_pos + 1][color], bit_plane)
-            if next_bit == curr_bit:
-               # Calculate total number of color changes in the block
-               total_header_len += num_bit_changes
-               num_bit_changes = 0
-            else:
-               num_bit_changes += 1
+   total_complexity = l_to_r_complexity + t_to_b_complexity
 
-   return float(total_header_len) / max_num_changes
+   return float(total_complexity) / max_num_changes
 
 def get_msg_block_complexity(block, bl_width, bl_height):
    """ Calculates a message block's complexity
-   
    Params:
       block - A string of 0s and 1s
       bl_width - Width of the block we are checking
       bl_height - Height of the block we are checking
 
-   Note: Yes, I know copypasta is bad, but I'm lazy right now and just
-         want to get this working.
+   """
+   bit_plane = 7
+   max_num_changes = get_max_num_changes(bl_width, bl_height)
+
+   # Convert the data to a format compatible with the complexity calculator
+   main_block = [int(bit) for bit in block]
+
+   l_to_r_complexity = left_to_right_complexity(main_block, bit_plane,
+                                                bl_width, bl_height)
+   t_to_b_complexity = top_to_bottom_complexity(main_block, bit_plane,
+                                                bl_width, bl_height)
+
+   total_complexity = l_to_r_complexity + t_to_b_complexity
+
+   return float(total_complexity) / max_num_changes
+
+def get_max_num_changes(bl_width, bl_height):
+   """ Function to determine the max number of changes possible in a block
+   Params:
+      bl_width - The width of the block
+      bl_height - The height of the block
 
    """
-   max_num_changes = ((bl_width - 1) * bl_height) + ((bl_height - 1) * bl_width)
-   num_bit_changes = 0
-   total_header_len = 0
+   bit_plane = 7
+   board = [int(bit) for bit in gen_white_checkerboard(bl_width, bl_height)]
 
-   # Calculate complexity from left to right
-   for y in range(0, bl_height):
-      for x in range(0, bl_width):
-         # Stop if at the end
-         if (y == bl_height - 1 and x == bl_width - 1):
-            total_header_len += num_bit_changes
-            break
-         else:
-            curr_pos = y * bl_width + x
-            curr_bit = int(block[curr_pos], base=2)
-            next_bit = int(block[curr_pos + 1], base=2)
-            if next_bit == curr_bit:
-               # Calculate total number of changes in the block
-               total_header_len += num_bit_changes
-               num_bit_changes = 0
-            else:
-               num_bit_changes += 1
+   l_to_r_changes = left_to_right_complexity(board, bit_plane, 
+                                             bl_width, bl_height)
+   t_to_b_changes = top_to_bottom_complexity(board, bit_plane, 
+                                             bl_width, bl_height)
 
-   num_bit_changes = 0
-
-   # Calculate complexity from top to bottom
-   for x in range(0, bl_width):
-      for y in range(0, bl_height):
-         # Stop if at the end
-         if (y == bl_height - 1 and x == bl_width - 1):
-            total_header_len += num_bit_changes
-            break
-         else:
-            curr_pos = y * bl_width + x
-            curr_bit = int(block[curr_pos], base=2)
-            next_bit = int(block[curr_pos + 1], base=2)
-            if next_bit == curr_bit:
-               # Calculate total number of changes in the block
-               total_header_len += num_bit_changes
-               num_bit_changes = 0
-            else:
-               num_bit_changes += 1
-
-   return float(total_header_len) / max_num_changes
+   return (l_to_r_changes + t_to_b_changes)
 
 def get_next_block(curr_index, bl_width, bl_height, im_width):
    """ Increments the index so that we are at the position of the next block
@@ -432,14 +398,13 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
 
    Returns:
       Index of the top left corner of the next block
-   
    """
    num_width_blocks = im_width / bl_width
    new_index = curr_index + 1 # Make the index 1-based for modulus operations
 
    # If we are at the end of the "row", drop down a couple "rows"
    if (new_index + (bl_width - 1)) % (num_width_blocks * bl_width) == 0:
-      new_index += (((bl_height - 1) * im_width) + 
+      new_index += (((bl_height - 1) * im_width) +
                    (im_width - (bl_width * num_width_blocks)))
    
    # Always increment by at least the block's width
@@ -454,9 +419,9 @@ def gen_white_checkerboard(bl_width, bl_height):
       bl_height - The height of the board
 
    Returns:
-      String of alternating 0s and 1s 
+      String of alternating 0s and 1s
 
-   """
+"""
    white_checkerboard = ""
 
    for i in range(0, (bl_width * bl_height)):
@@ -477,7 +442,7 @@ def embed_bit_plane(block, color, bit_plane, data):
    block_bit = bit_from_byte(block[color], bit_plane)
    new_bit = int(data, base=2)
    bit_distance = 7 - bit_plane
-   bit_val = 1 << bit_distance 
+   bit_val = 1 << bit_distance
 
    if block_bit > new_bit:
       block[color] -= bit_val
@@ -525,9 +490,81 @@ def embed_block(block, data, bl_width, bl_height):
                if bits_embedded == len(data): # Embedded all the bits we can
                   break
                else:
-                  embed_bit_plane(block[target], color, bit_plane, 
+                  embed_bit_plane(block[target], color, bit_plane,
                                   data[bits_embedded])
                   bits_embedded += 1
          bit_plane -= 1
 
    return bits_embedded
+
+def left_to_right_complexity(block, bit_plane, bl_width, bl_height):
+   """ Gets the complexity of a block from left to right
+
+   Params:
+      block - List of integers
+      bit_plane - Which plane to focus on
+      bl_width - Width of the block we are checking
+      bl_height - Height of the block we are checking
+
+   Returns:
+      Float representing complexity of the block from left to right
+
+   """
+
+   num_bit_changes = 0
+   total_header_len = 0
+
+   for y in range(0, bl_height):
+      for x in range(0, bl_width):
+         # Stop if at the end
+         if (y == bl_height - 1 and x == bl_width - 1):
+            total_header_len += num_bit_changes
+            break
+         else:
+            curr_pos = y * bl_width + x
+            curr_bit = bit_from_byte(block[curr_pos], bit_plane)
+            next_bit = bit_from_byte(block[curr_pos + 1], bit_plane)
+            if next_bit == curr_bit:
+               # Calculate total number of color changes in the block
+               total_header_len += num_bit_changes
+               num_bit_changes = 0
+            else:
+               num_bit_changes += 1
+
+   return total_header_len
+
+def top_to_bottom_complexity(block, bit_plane, bl_width, bl_height):
+   """ Gets the complexity of a block from top to bottom
+
+   Params:
+      block - List of integers
+      bit_plane - Which plane to focus on
+      bl_width - Width of the block we are checking
+      bl_height - Height of the block we are checking
+
+   Returns:
+      Float representing complexity of the block from top to bottom
+
+   """
+
+   num_bit_changes = 0
+   total_header_len = 0
+
+   for x in range(0, bl_width):
+      for y in range(0, bl_height):
+         # Stop if at the end
+         if (y == bl_height - 1 and x == bl_width - 1):
+            total_header_len += num_bit_changes
+            break
+         else:
+            curr_pos = y * bl_width + x
+            curr_bit = bit_from_byte(block[curr_pos], bit_plane)
+            next_bit = bit_from_byte(block[curr_pos + 1], bit_plane)
+            if next_bit == curr_bit:
+               # Calculate total number of color changes in the block
+               total_header_len += num_bit_changes
+               num_bit_changes = 0
+            else:
+               num_bit_changes += 1
+
+   return total_header_len

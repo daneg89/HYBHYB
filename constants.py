@@ -29,4 +29,4 @@ TEXT  = 2
 VIDEO = 3
 
 # Misc
-THRESHOLD = 0.48
+THRESHOLD = 0.45
