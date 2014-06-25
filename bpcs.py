@@ -114,12 +114,9 @@ def bpcs_embed(cover_image, data):
       for i in range(0, (message_len) - len(data[-1])):
          data[-1] = data[-1] + bin(i % 2)[2:]
          
-   # Conjugate the message blocks that need it
+   # Add the conjugation bits to all the blocks
    for i in range(0, len(data)):
-      data[i] = "0" + data[i] # Add the conjugation bit first
-      block_complexity = get_msg_block_complexity(data[i], bl_width, bl_height)
-      if block_complexity < constants.THRESHOLD:
-         data[i] = conjugate_block(data[i], bl_width, bl_height)
+      data[i] = "0" + data[i]
 
    # Flatten data
    data = [bit for bit_string in data for bit in bit_string]
@@ -137,7 +134,7 @@ def bpcs_embed(cover_image, data):
       bits_embedded = embed_block(pixel_block, data, bl_width, bl_height)
 
       # Shorten the data so we don't have to copy it over to a new list
-      if bits_embedded > len(data):
+      if bits_embedded >= len(data):
          data = []
       else:
          del data[0:bits_embedded]
@@ -166,6 +163,7 @@ def bpcs_embed(cover_image, data):
 
    # Save the embedded image
    cover_image.save(constants.PATH_STEGO + "BPCS_Steg.bmp")
+
 
 def calc_block_size(image_size):
    """ Calculates message block size for embedding
@@ -273,7 +271,7 @@ def decode_block(block, bl_width, bl_height):
          block[0][color] += conjugation_offset
          conjugation_offset = 0
 
-      if complexity < constants.THRESHOLD or bit_plane < 0:
+      if complexity < get_threshold(bit_plane) or bit_plane < 0:
          color += 1
          bit_plane = 7
          if color == num_colors: # Ran out of colors
@@ -411,6 +409,27 @@ def get_next_block(curr_index, bl_width, bl_height, im_width):
    new_index += bl_width
    return new_index - 1 # Back to 0-based indices
 
+def get_threshold(bit_plane):
+   """ Dynamically determines BPCS threshold based on the bit plane
+
+   Params:
+      bit_plane - The bit plane that will be embedded
+
+   Returns:
+      Float that corresponds to the complexity threshold
+
+   """
+   if bit_plane == 7:
+      threshold = 0.0 # Always embed LSB
+   elif bit_plane == 6:
+      threshold = 0.2
+   elif bit_plane == 5:
+      threshold = 0.3
+   else:
+      threshold = 0.45
+
+   return threshold
+
 def gen_white_checkerboard(bl_width, bl_height):
    """ Generates a white checkerboard
 
@@ -472,26 +491,31 @@ def embed_block(block, data, bl_width, bl_height):
 
    while True:
       if bit_plane >= 0:
-         
-         if bit_plane == lsb: # Always embed LSB
-            complexity = 1.0
-         else:
-            complexity = get_color_block_complexity(block, color, bit_plane,
-                                                   bl_width, bl_height)
-      if complexity < constants.THRESHOLD or bit_plane < 0:
+         complexity = get_color_block_complexity(block, color, bit_plane,
+                                                 bl_width, bl_height)
+      if complexity < get_threshold(bit_plane) or bit_plane < 0:
          color += 1
          bit_plane = 7
          if color == num_colors: # Ran out of colors
             break
       else:
+         message = data[bits_embedded:(bits_embedded + (bl_width * bl_height))]
+         if message == []:
+            break
+
+         # Conjugate message as needed
+         block_complexity = get_msg_block_complexity(message, bl_width, bl_height)
+         if block_complexity < get_threshold(bit_plane):
+            message = conjugate_block(message, bl_width, bl_height)
+
          for y in range(0, bl_height):
             for x in range(0, bl_width):
                target = y * bl_width + x
-               if bits_embedded == len(data): # Embedded all the bits we can
+               if bits_embedded >= len(data): # Embedded all the bits we can
                   break
                else:
                   embed_bit_plane(block[target], color, bit_plane,
-                                  data[bits_embedded])
+                                  message[bits_embedded % len(message)])
                   bits_embedded += 1
          bit_plane -= 1
 
