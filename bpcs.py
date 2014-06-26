@@ -254,13 +254,15 @@ def decode_block(block, bl_width, bl_height):
    bit_plane = 7 # Start at LSB
    color = 0
    conjugation_offset = 0
+   lsb = 7
+   msb = 0
    num_colors = 3 # RGB
 
    while True:
       if bit_plane >= 0:
          # Set the conjugation bits temporarily to 0 to get the 
          # "true" complexity
-         for i in range(0, bit_plane):
+         for i in range(msb, lsb):
             if bit_from_byte(block[0][color], i) == 1:
                conjugation_offset += 1 << (7 - i)
 
@@ -425,8 +427,10 @@ def get_threshold(bit_plane):
       threshold = 0.2
    elif bit_plane == 5:
       threshold = 0.3
+   elif bit_plane == 4:
+      threshold = 0.4
    else:
-      threshold = 0.45
+      threshold = constants.THRESHOLD
 
    return threshold
 
@@ -487,12 +491,25 @@ def embed_block(block, data, bl_width, bl_height):
    bit_plane = 7 # Start at LSB
    color = 0
    lsb = 7
+   msb = 0
+   conjugation_offset = 0
    num_colors = 3 # RGB
 
    while True:
       if bit_plane >= 0:
+         # Set the conjugation bits temporarily to 0 to get the 
+         # "true" complexity
+         for i in range(msb, lsb):
+            if bit_from_byte(block[0][color], i) == 1:
+               conjugation_offset += 1 << (7 - i)
+
+         block[0][color] -= conjugation_offset
          complexity = get_color_block_complexity(block, color, bit_plane,
                                                  bl_width, bl_height)
+
+         # Restore conjugation bits
+         block[0][color] += conjugation_offset
+         conjugation_offset = 0
       if complexity < get_threshold(bit_plane) or bit_plane < 0:
          color += 1
          bit_plane = 7

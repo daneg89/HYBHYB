@@ -122,20 +122,6 @@ def est_embed_capacity(num_bits, method):
    if method == constants.LSB:
       return num_bits / 8 # ~12.5%
    elif method == constants.BPCS:
-      return num_bits / 4 # ~25%
+      return int(num_bits * 0.3) # ~30%
    else:
       return 0
-
-def generate_message(embed_capacity):
-   """
-
-   Generates a random message for the purpose of testing the effectiveness
-   of the program. Message will be about 98-99% of the embedding capacity
-   that we specify.
- 
-   Params:
-      embed_capacity - Number of bits that the target object can have modified
-
-   """
-   # TODO: implement
-   pass
