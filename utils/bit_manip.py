@@ -13,7 +13,11 @@ def ascii_to_bits(ascii_str):
    bit_string = ""
 
    for char in ascii_str:
-      bit_string += bin(ord(char))[2:]
+      char_bits = bin(ord(char))[2:]
+      if len(char_bits) < 7: # pad with 0's if necessary
+         char_bits = "0" * (7 - len(char_bits)) + char_bits
+
+      bit_string += char_bits
 
    return bit_string
 
